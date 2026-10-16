@@ -97,6 +97,7 @@ export const swaggerDocument = {
       get: {
         summary: 'Get system feature flags',
         tags: ['Feature Flags'],
+        security: [],
         responses: {
           200: {
             description: 'List of all system feature flags and active status',
@@ -297,6 +298,30 @@ export const swaggerDocument = {
           },
           403: {
             description: 'Forbidden (lacks settings.manage)',
+          },
+        },
+      },
+    },
+    '/health': {
+      get: {
+        summary: 'Service health check',
+        tags: ['System'],
+        security: [],
+        responses: {
+          200: {
+            description: 'Service is healthy',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    status: { type: 'string', example: 'healthy' },
+                    timestamp: { type: 'string', example: '2026-10-17T00:00:00.000Z' },
+                  },
+                  required: ['status', 'timestamp'],
+                },
+              },
+            },
           },
         },
       },

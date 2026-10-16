@@ -39,6 +39,18 @@ describe('Demo API Integration Tests', () => {
       expect(res.status).toBe(401);
       expect(res.body.error).toBe('UNAUTHORIZED');
     });
+
+    it('allows unauthenticated access to public GET /api/feature-flags', async () => {
+      const res = await request(app).get('/api/feature-flags');
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body.flags)).toBe(true);
+    });
+
+    it('allows unauthenticated access to public GET /health', async () => {
+      const res = await request(app).get('/health');
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe('healthy');
+    });
   });
 
   describe('Admin User (x-demo-user-id: user-admin)', () => {
@@ -199,12 +211,26 @@ describe('Demo API Integration Tests', () => {
   });
 
   describe('Feature Flag guarded routes & OpenAPI spec', () => {
-    it('serves OpenAPI specification on /api/docs/json', async () => {
+    it('serves OpenAPI specification with explicit security: [] for public endpoints', async () => {
       const res = await request(app).get('/api/docs/json');
       expect(res.status).toBe(200);
       expect(res.body.openapi).toBe('3.0.3');
       expect(res.body.paths['/api/feature-flags/{key}/toggle']).toBeDefined();
       expect(res.body.paths['/api/reset']).toBeDefined();
+
+      // Global security scheme defines DemoUserIdAuth
+      expect(res.body.security).toEqual([{ DemoUserIdAuth: [] }]);
+
+      // Public endpoints explicitly override global security with empty array
+      expect(res.body.paths['/api/feature-flags'].get.security).toEqual([]);
+      expect(res.body.paths['/health'].get.security).toEqual([]);
+
+      // Protected endpoints inherit global security (no security: [] override)
+      expect(res.body.paths['/api/me'].get.security).toBeUndefined();
+      expect(res.body.paths['/api/users'].get.security).toBeUndefined();
+      expect(res.body.paths['/api/settings'].get.security).toBeUndefined();
+      expect(res.body.paths['/api/reset'].post.security).toBeUndefined();
+      expect(res.body.paths['/api/feature-flags/{key}/toggle'].post.security).toBeUndefined();
     });
 
     it('allows exporting reports when export-reports flag is enabled', async () => {
