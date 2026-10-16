@@ -206,4 +206,183 @@ describe('@gatekeeper/express Middleware', () => {
       expect(res.body.message).toBe('beta feature accessed');
     });
   });
+
+  describe('Custom onUnauthorized and onForbidden handlers', () => {
+    it('invokes route-level onUnauthorized callback when user is missing', async () => {
+      const app = express();
+      app.get(
+        '/custom-unauth',
+        requirePermission('users.read', {
+          onUnauthorized: (res) => {
+            res.status(401).json({ custom: true, code: 'AUTH_REQUIRED' });
+          },
+        }),
+      );
+
+      const res = await request(app).get('/custom-unauth');
+      expect(res.status).toBe(401);
+      expect(res.body).toEqual({ custom: true, code: 'AUTH_REQUIRED' });
+    });
+
+    it('invokes route-level onForbidden callback with missing permissions list', async () => {
+      const app = express();
+      app.use((req, _res, next) => {
+        req.user = memberUser;
+        next();
+      });
+      app.get(
+        '/custom-forbidden',
+        requirePermission('users.delete', {
+          onForbidden: (res, missing) => {
+            res.status(403).json({
+              error: 'ACCESS_DENIED',
+              lacking: missing,
+            });
+          },
+        }),
+      );
+
+      const res = await request(app).get('/custom-forbidden');
+      expect(res.status).toBe(403);
+      expect(res.body).toEqual({
+        error: 'ACCESS_DENIED',
+        lacking: ['users.delete'],
+      });
+    });
+
+    it('falls back to global gatekeeperMiddleware onUnauthorized and onForbidden handlers', async () => {
+      const app = express();
+      app.use(
+        gatekeeperMiddleware({
+          onUnauthorized: (res) => {
+            res.status(401).json({ globalUnauth: true });
+          },
+          onForbidden: (res, missing) => {
+            res.status(403).json({ globalForbidden: true, missing });
+          },
+        }),
+      );
+
+      app.get('/test-route', requirePermission('settings.manage'), (_req, res) => {
+        res.json({ ok: true });
+      });
+
+      // 1. Unauthenticated -> invokes global onUnauthorized
+      const unauthRes = await request(app).get('/test-route');
+      expect(unauthRes.status).toBe(401);
+      expect(unauthRes.body).toEqual({ globalUnauth: true });
+
+      // 2. Forbidden -> invokes global onForbidden
+      const forbiddenApp = express();
+      forbiddenApp.use((req, _res, next) => {
+        req.user = memberUser;
+        next();
+      });
+      forbiddenApp.use(
+        gatekeeperMiddleware({
+          onForbidden: (res, missing) => {
+            res.status(403).json({ globalForbidden: true, missing });
+          },
+        }),
+      );
+      forbiddenApp.get('/test-route', requirePermission('settings.manage'), (_req, res) => {
+        res.json({ ok: true });
+      });
+
+      const forbRes = await request(forbiddenApp).get('/test-route');
+      expect(forbRes.status).toBe(403);
+      expect(forbRes.body).toEqual({
+        globalForbidden: true,
+        missing: ['settings.manage'],
+      });
+    });
+
+    it('works with requireAnyPermission custom handlers', async () => {
+      const app = express();
+      app.get(
+        '/custom-any-unauth',
+        requireAnyPermission(['users.read', 'settings.manage'], {
+          onUnauthorized: (res) => {
+            res.status(401).json({ error: 'PLEASE_LOGIN' });
+          },
+        }),
+      );
+
+      const res = await request(app).get('/custom-any-unauth');
+      expect(res.status).toBe(401);
+      expect(res.body).toEqual({ error: 'PLEASE_LOGIN' });
+    });
+  });
+
+  describe('Custom getUser and getFlags extractors', () => {
+    it('extracts user using route-level getUser option', async () => {
+      const app = express();
+      app.use((req, _res, next) => {
+        (req as unknown as { sessionUser: GatekeeperUser }).sessionUser = adminUser;
+        next();
+      });
+
+      app.get(
+        '/custom-user-route',
+        requirePermission('settings.manage', {
+          getUser: (req) => (req as unknown as { sessionUser?: GatekeeperUser }).sessionUser,
+        }),
+        (_req, res) => {
+          res.json({ success: true });
+        },
+      );
+
+      const res = await request(app).get('/custom-user-route');
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('extracts flags using custom getFlags resolver in requireFeatureFlag', async () => {
+      const app = express();
+      app.get(
+        '/custom-flag-route',
+        requireFeatureFlag('export-reports', {
+          getFlags: () => ({ 'export-reports': true }),
+        }),
+        (_req, res) => {
+          res.json({ exported: true });
+        },
+      );
+
+      const res = await request(app).get('/custom-flag-route');
+      expect(res.status).toBe(200);
+      expect(res.body.exported).toBe(true);
+    });
+
+    it('uses global getUser and getFlags configured in gatekeeperMiddleware', async () => {
+      const app = express();
+      app.use((req, _res, next) => {
+        (req as unknown as { customAuth: GatekeeperUser }).customAuth = adminUser;
+        next();
+      });
+
+      app.use(
+        gatekeeperMiddleware({
+          getUser: (req) => (req as unknown as { customAuth?: GatekeeperUser }).customAuth,
+          getFlags: () => ({ 'beta-analytics': true }),
+        }),
+      );
+
+      app.get('/via-global-user', requirePermission('users.create'), (req, res) => {
+        res.json({ ok: true, canDelete: req.can?.('users.delete') });
+      });
+
+      app.get('/via-global-flag', requireFeatureFlag('beta-analytics'), (_req, res) => {
+        res.json({ betaEnabled: true });
+      });
+
+      const userRes = await request(app).get('/via-global-user');
+      expect(userRes.status).toBe(200);
+      expect(userRes.body.canDelete).toBe(true);
+
+      const flagRes = await request(app).get('/via-global-flag');
+      expect(flagRes.status).toBe(200);
+      expect(flagRes.body.betaEnabled).toBe(true);
+    });
+  });
 });

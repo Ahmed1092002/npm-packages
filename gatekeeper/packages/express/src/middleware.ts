@@ -32,6 +32,8 @@ export const FORBIDDEN_PAYLOAD = {
  */
 export function gatekeeperMiddleware(options: GatekeeperMiddlewareOptions = {}): RequestHandler {
   return (req: Request, _res: Response, next: NextFunction): void => {
+    req.gatekeeperOptions = options;
+
     const user = options.getUser ? options.getUser(req) : req.user;
     if (user && !req.user) {
       req.user = user;
@@ -42,7 +44,8 @@ export function gatekeeperMiddleware(options: GatekeeperMiddlewareOptions = {}):
     }
 
     req.can = (permission: Permission): boolean => {
-      return coreCan(req.user, permission, options.roleMap);
+      const activeUser = options.getUser ? options.getUser(req) : req.user;
+      return coreCan(activeUser, permission, options.roleMap);
     };
 
     next();
@@ -53,24 +56,36 @@ export function gatekeeperMiddleware(options: GatekeeperMiddlewareOptions = {}):
  * Express middleware requiring the authenticated user to possess a specific permission.
  *
  * @param permission - The permission required to access the route.
- * @param options - Optional custom role map or user extractor.
+ * @param options - Optional custom role map, user extractor, or failure callbacks.
  */
 export function requirePermission(
   permission: Permission,
   options: PermissionMiddlewareOptions = {},
 ): RequestHandler {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    const user = options.getUser ? options.getUser(req) : req.user;
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const userExtractor = options.getUser ?? req.gatekeeperOptions?.getUser;
+    const user = userExtractor ? userExtractor(req) : req.user;
+    const roleMap = options.roleMap ?? req.gatekeeperOptions?.roleMap;
 
-    // Missing authenticated user -> 401
+    // Missing authenticated user -> 401 or custom onUnauthorized handler
     if (!user) {
+      const onUnauthorized = options.onUnauthorized ?? req.gatekeeperOptions?.onUnauthorized;
+      if (onUnauthorized) {
+        await onUnauthorized(res, req);
+        return;
+      }
       res.status(401).json(UNAUTHORIZED_PAYLOAD);
       return;
     }
 
-    // Permission check -> 403 if denied
-    const hasPermission = coreCan(user, permission, options.roleMap);
+    // Permission check -> 403 or custom onForbidden handler if denied
+    const hasPermission = coreCan(user, permission, roleMap);
     if (!hasPermission) {
+      const onForbidden = options.onForbidden ?? req.gatekeeperOptions?.onForbidden;
+      if (onForbidden) {
+        await onForbidden(res, [permission], req);
+        return;
+      }
       res.status(403).json(FORBIDDEN_PAYLOAD);
       return;
     }
@@ -87,16 +102,28 @@ export function requireAnyPermission(
   permissions: Permission[],
   options: PermissionMiddlewareOptions = {},
 ): RequestHandler {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    const user = options.getUser ? options.getUser(req) : req.user;
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const userExtractor = options.getUser ?? req.gatekeeperOptions?.getUser;
+    const user = userExtractor ? userExtractor(req) : req.user;
+    const roleMap = options.roleMap ?? req.gatekeeperOptions?.roleMap;
 
     if (!user) {
+      const onUnauthorized = options.onUnauthorized ?? req.gatekeeperOptions?.onUnauthorized;
+      if (onUnauthorized) {
+        await onUnauthorized(res, req);
+        return;
+      }
       res.status(401).json(UNAUTHORIZED_PAYLOAD);
       return;
     }
 
-    const hasAny = coreCanAny(user, permissions, options.roleMap);
+    const hasAny = coreCanAny(user, permissions, roleMap);
     if (!hasAny) {
+      const onForbidden = options.onForbidden ?? req.gatekeeperOptions?.onForbidden;
+      if (onForbidden) {
+        await onForbidden(res, permissions, req);
+        return;
+      }
       res.status(403).json(FORBIDDEN_PAYLOAD);
       return;
     }
@@ -113,7 +140,8 @@ export function requireFeatureFlag(
   options: FeatureFlagMiddlewareOptions = {},
 ): RequestHandler {
   return (req: Request, res: Response, next: NextFunction): void => {
-    const flags = options.getFlags ? options.getFlags(req) : req.gatekeeperFlags;
+    const flagsResolver = options.getFlags ?? req.gatekeeperOptions?.getFlags;
+    const flags = flagsResolver ? flagsResolver(req) : req.gatekeeperFlags;
 
     const enabled = isFeatureEnabled(flags, flagKey);
     if (!enabled) {

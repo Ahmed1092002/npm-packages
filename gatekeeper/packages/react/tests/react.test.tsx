@@ -160,8 +160,8 @@ describe('@gatekeeper/react', () => {
     });
   });
 
-  describe('Loading states', () => {
-    it('renders loading fallback when isLoading is true', () => {
+  describe('Loading states and safe fallbacks', () => {
+    it('renders provider fallback when isLoading is true and fallback is supplied', () => {
       render(
         <GatekeeperProvider
           user={adminUser}
@@ -174,6 +174,47 @@ describe('@gatekeeper/react', () => {
 
       expect(screen.getByText('Loading Gatekeeper...')).toBeInTheDocument();
       expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
+    });
+
+    it('fails safe in <Feature /> component during loading without leaking enabled content', () => {
+      render(
+        <GatekeeperProvider user={adminUser} flags={{ 'new-dashboard': true }} isLoading={true}>
+          <Feature flag="new-dashboard" fallback={<div>Feature Loading Fallback</div>}>
+            <div>Confidential Beta Feature</div>
+          </Feature>
+        </GatekeeperProvider>,
+      );
+
+      // Must NOT render enabled feature while loading
+      expect(screen.queryByText('Confidential Beta Feature')).not.toBeInTheDocument();
+      // Must render fallback
+      expect(screen.getByText('Feature Loading Fallback')).toBeInTheDocument();
+    });
+
+    it('ensures hooks return false and empty permissions during loading', () => {
+      const LoadingHookConsumer = () => {
+        const canDelete = usePermission('users.delete');
+        const hasDashboard = useFeatureFlag('new-dashboard');
+        const { effectivePermissions } = useGatekeeper();
+
+        return (
+          <div>
+            <span data-testid="load-can-delete">{canDelete ? 'true' : 'false'}</span>
+            <span data-testid="load-flag">{hasDashboard ? 'true' : 'false'}</span>
+            <span data-testid="load-perms-count">{effectivePermissions.length}</span>
+          </div>
+        );
+      };
+
+      render(
+        <GatekeeperProvider user={adminUser} flags={{ 'new-dashboard': true }} isLoading={true}>
+          <LoadingHookConsumer />
+        </GatekeeperProvider>,
+      );
+
+      expect(screen.getByTestId('load-can-delete')).toHaveTextContent('false');
+      expect(screen.getByTestId('load-flag')).toHaveTextContent('false');
+      expect(screen.getByTestId('load-perms-count')).toHaveTextContent('0');
     });
   });
 });

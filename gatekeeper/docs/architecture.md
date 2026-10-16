@@ -78,11 +78,48 @@ function can(
   - `requirePermission('users.read')`: Enforces required permission, returning HTTP 401 when unauthenticated and HTTP 403 when forbidden.
   - `requireAnyPermission(['users.read', 'reports.view'])`: Enforces presence of at least one permission.
   - `requireFeatureFlag('export-reports')`: Rejects requests with HTTP 403 when a system feature flag is disabled.
-- **Type Augmentation**: Safely extends Express `Request` with `req.user`, `req.gatekeeperFlags`, and `req.can`.
+- **Customizable Auth Callbacks**:
+  - `onUnauthorized(req, res)`: Custom handler called when no authenticated user is present. If omitted, falls back to `{ error: 'Unauthorized', message: 'Authentication required' }` (401).
+  - `onForbidden(req, res, missingPermissions)`: Custom handler called when the authenticated user lacks the required permission(s). If omitted, falls back to `{ error: 'Forbidden', message: 'Insufficient permissions', missingPermissions }` (403).
+  - Configurable at both the global middleware level (`gatekeeper(...)`) and overridden per-route (`requirePermission(perm, { onForbidden, onUnauthorized })`).
+- **Context Resolution**:
+  - Dynamically resolves user identity (`getUser`) and feature flags (`getFlags`) from route options, request-level augmentation (`req.user`), or global middleware options.
+- **Type Augmentation**: Safely extends Express `Request` with `req.user`, `req.gatekeeperFlags`, `req.can`, and `req.gatekeeperOptions`.
 
 ---
 
-## 4. Extensibility & Future Architecture
+## 4. Security & Safety Design
+
+### Fail-Safe React Loading State
+
+In `@gatekeeper/react`, authorization decisions default to closed (`deny`):
+
+- While `isLoading: true`, `isFeatureEnabled()`, `can()`, `canAll()`, and `canAny()` unconditionally evaluate to `false`.
+- Guard components (`<Can>` and `<Feature>`) render their respective `fallback` slots (or `null`) until loading completes.
+- Prevents UI flashes of privileged actions or sensitive controls during asynchronous authentication / profile hydration.
+
+### RFC 4180 Compliant CSV Export
+
+In `apps/demo-api`, the report export utility (`csv.ts`) enforces RFC 4180 standard formatting:
+
+- Fields containing double quotes (`"`), commas (`,`), carriage returns (`\r`), newlines (`\n`), or leading/trailing whitespace are quoted.
+- Double quotes inside values are properly escaped by doubling them (`""`).
+- Line endings default to standard CRLF (`\r\n`).
+
+### Demonstration vs. Production Architecture
+
+| Concern                   | Demo Implementation (`apps/demo-api`)                  | Production Recommendation                                                       |
+| :------------------------ | :----------------------------------------------------- | :------------------------------------------------------------------------------ |
+| **Authentication**        | `x-demo-user-id` header mapped to in-memory mock users | JWT / OIDC session verification middleware (OAuth2, Auth0, Supabase, Clerk)     |
+| **Persistence**           | Volatile in-memory mock data with `POST /api/reset`    | PostgreSQL / DynamoDB with ACID transactions and schema migrations              |
+| **State Synchronization** | Manual polling or page refresh                         | WebSockets, Server-Sent Events (SSE), or cache invalidation (React Query / SWR) |
+| **Feature Flags**         | In-memory key-value map with `POST /toggle`            | Unleash, LaunchDarkly, or Redis with targeting rules and percentage rollouts    |
+| **API Documentation**     | Handcrafted OpenAPI 3.0 specification (`swagger.ts`)   | Auto-generated specs from Zod / tsoa / NestJS decorators with CI validation     |
+| **Rate Limiting & CORS**  | Basic local CORS for demo dashboard                    | Reverse-proxy rate limiting (Cloudflare, Envoy), Redis-backed token buckets     |
+
+---
+
+## 5. Extensibility & Future Architecture
 
 Gatekeeper is intentionally engineered to allow seamless addition of enterprise features without breaking core signatures:
 
@@ -113,6 +150,6 @@ classDiagram
     }
 ```
 
-1. **PostgreSQL Adapter**: The pure evaluator can be wrapped by an adapter reading permissions and user records from SQL tables.
-2. **JWT Integration**: Tokens containing role claims and permissions can directly hydrate `req.user`.
-3. **Audit Logging**: The detailed `evaluatePermission()` diagnostic results can be streamed directly into OpenTelemetry or Kafka.
+1. **Database-Backed Evaluator**: The pure evaluator can be wrapped by an adapter reading permissions, role inheritance graphs, and user records from SQL tables.
+2. **JWT Claims Hydration**: Cryptographically signed tokens containing role claims and permissions can directly hydrate `req.user` in an upstream authentication middleware.
+3. **Structured Audit Logging**: The detailed `evaluatePermission()` diagnostic results can be piped directly into OpenTelemetry, Datadog, or Kafka for compliance tracing.

@@ -1,8 +1,17 @@
 # 🛡️ Gatekeeper
 
-> **Production-grade authorization and feature-flag toolkit for full-stack TypeScript applications.**
+> **Portfolio-quality, production-minded authorization and feature-flag toolkit for full-stack TypeScript applications.**
 
 Gatekeeper provides declarative, type-safe permission checks and dynamic feature-flag evaluation across your entire stack. It pairs framework-independent core business logic with purpose-built packages for **React** frontends and **Express** backends.
+
+---
+
+> [!IMPORTANT]
+> **Demonstration Architecture & Security Notice:**
+>
+> - **Simulated Authentication (`x-demo-user-id`)**: The included `demo-api` and `demo-dashboard` applications simulate authentication by passing an `x-demo-user-id` header to enable zero-friction role testing. **Never use header-based user impersonation in production.** Real applications should replace this middleware with signed JWT verification, secure session cookies, or an OAuth2/OIDC identity provider.
+> - **In-Memory Volatile Store**: The demo API maintains state in memory for testing and experimentation. A real-world deployment requires database persistence (e.g., PostgreSQL with Prisma or Drizzle).
+> - **OpenAPI / Swagger Contract**: The documentation served at `/api/docs` is currently maintained manually as a reference specification for the demo API rather than dynamically derived from route definitions.
 
 ---
 
@@ -12,10 +21,10 @@ Gatekeeper provides declarative, type-safe permission checks and dynamic feature
 graph TD
     subgraph Monorepo ["Gatekeeper Monorepo (pnpm workspaces)"]
         Core["@gatekeeper/core<br/>- Pure functional evaluator<br/>- RBAC + Direct User Grants<br/>- Feature Flag Resolution"]
-        ReactPkg["@gatekeeper/react<br/>- GatekeeperProvider<br/>- &lt;Can&gt; & &lt;Feature&gt; components<br/>- usePermission & useFeatureFlag"]
-        ExpressPkg["@gatekeeper/express<br/>- requirePermission() middleware<br/>- requireAnyPermission() middleware<br/>- requireFeatureFlag() middleware<br/>- req.user type augmentation"]
+        ReactPkg["@gatekeeper/react<br/>- GatekeeperProvider (fail-safe loading)<br/>- &lt;Can&gt; & &lt;Feature&gt; components<br/>- usePermission & useFeatureFlag"]
+        ExpressPkg["@gatekeeper/express<br/>- requirePermission() middleware<br/>- requireAnyPermission() middleware<br/>- requireFeatureFlag() middleware<br/>- onUnauthorized & onForbidden handlers"]
         DemoDashboard["apps/demo-dashboard<br/>- React 19 + Vite + Tailwind CSS<br/>- Real-time RBAC matrix & API probe"]
-        DemoApi["apps/demo-api<br/>- Node.js + Express + TypeScript<br/>- OpenAPI Swagger documentation"]
+        DemoApi["apps/demo-api<br/>- Node.js + Express + TypeScript<br/>- Protected mutations & RFC 4180 CSV export"]
     end
 
     ReactPkg --> Core
@@ -31,11 +40,11 @@ graph TD
 
 ## 📦 Packages Overview
 
-| Package                                     | Status           | Description                                                                                |
-| :------------------------------------------ | :--------------- | :----------------------------------------------------------------------------------------- |
-| [`@gatekeeper/core`](./packages/core)       | Production Ready | Framework-independent types, role-to-permission mappings, and pure `can()` evaluators.     |
-| [`@gatekeeper/react`](./packages/react)     | Production Ready | React context provider, declarative `<Can>` / `<Feature>` guards, and reactive hooks.      |
-| [`@gatekeeper/express`](./packages/express) | Production Ready | Robust Express route guards enforcing permissions and feature flags with 401/403 payloads. |
+| Package                                     | Status            | Description                                                                                 |
+| :------------------------------------------ | :---------------- | :------------------------------------------------------------------------------------------ |
+| [`@gatekeeper/core`](./packages/core)       | Portfolio-Quality | Framework-independent types, role-to-permission mappings, and pure `can()` evaluators.      |
+| [`@gatekeeper/react`](./packages/react)     | Portfolio-Quality | React context provider, fail-safe loading state, `<Can>` / `<Feature>`, and reactive hooks. |
+| [`@gatekeeper/express`](./packages/express) | Portfolio-Quality | Express route guards with customizable `onUnauthorized` and `onForbidden` callbacks.        |
 
 ---
 
@@ -63,7 +72,7 @@ npm install @gatekeeper/core @gatekeeper/express
 
 ### 1. React (`@gatekeeper/react`)
 
-Wrap your application in `GatekeeperProvider` and use declarative components or hooks:
+Wrap your application in `GatekeeperProvider` and use declarative components or hooks. During loading states (`isLoading = true`), all permission checks and feature flags fail safe (evaluated as `false`) to prevent flashes of unauthorized UI:
 
 ```tsx
 import React from 'react';
@@ -73,8 +82,8 @@ import type { GatekeeperUser } from '@gatekeeper/core';
 const currentUser: GatekeeperUser = {
   id: 'usr_100',
   name: 'Alex Rivera',
-  role: 'manager', // permissions: ['users.read', 'reports.view']
-  permissions: ['custom.audit'], // optional direct permissions
+  role: 'manager', // Default permissions: ['users.read', 'reports.view']
+  permissions: ['custom.audit'], // Optional direct permissions augmenting role
 };
 
 const flags = {
@@ -85,7 +94,7 @@ const flags = {
 
 export function App() {
   return (
-    <GatekeeperProvider user={currentUser} flags={flags}>
+    <GatekeeperProvider user={currentUser} flags={flags} isLoading={false}>
       <MainLayout />
     </GatekeeperProvider>
   );
@@ -119,7 +128,7 @@ function MainLayout() {
 
 ### 2. Express Backend (`@gatekeeper/express`)
 
-Protect routes using declarative middleware. Missing authentication returns `401 Unauthorized`; insufficient privileges return `403 Forbidden`.
+Protect routes using declarative middleware. Missing authentication defaults to `401 Unauthorized`; insufficient privileges return `403 Forbidden`. You can also supply custom failure handlers:
 
 ```typescript
 import express from 'express';
@@ -136,14 +145,23 @@ app.use(express.json());
 
 // 1. Authentication layer: Attach authenticated user to req.user
 app.use((req, res, next) => {
-  // Replace with your real JWT/Session validation
+  // In production, verify JWT bearer token or session cookie here
   req.user = authenticateRequest(req);
   req.gatekeeperFlags = { 'export-reports': true };
   next();
 });
 
-// 2. Attach Gatekeeper helpers (req.can)
-app.use(gatekeeperMiddleware());
+// 2. Global Gatekeeper middleware (supports global callbacks and helpers)
+app.use(
+  gatekeeperMiddleware({
+    onUnauthorized: (res) => {
+      res.status(401).json({ error: 'UNAUTHORIZED', message: 'Session expired or missing.' });
+    },
+    onForbidden: (res, missing) => {
+      res.status(403).json({ error: 'FORBIDDEN', missingPermissions: missing });
+    },
+  }),
+);
 
 // 3. Protect routes with fine-grained permissions
 app.get('/api/users', requirePermission('users.read'), (req, res) => {
@@ -155,7 +173,7 @@ app.delete('/api/users/:id', requirePermission('users.delete'), (req, res) => {
   res.json({ success: true, message: 'User deleted.' });
 });
 
-// Route protected by multiple permissions
+// Multiple permission check (any permission)
 app.get('/api/reports', requireAnyPermission(['reports.view', 'admin.audit']), (req, res) => {
   res.json({ reports: [] });
 });
@@ -166,7 +184,7 @@ app.get(
   requirePermission('reports.view'),
   requireFeatureFlag('export-reports'),
   (req, res) => {
-    res.attachment('reports.csv').send('id,title\n1,Audit');
+    res.attachment('reports.csv').send('id,title\r\n1,Audit\r\n');
   },
 );
 
@@ -202,25 +220,26 @@ pnpm dev
 
 ## 📋 API Endpoints Reference
 
-The `demo-api` implements these protected endpoints:
+The `demo-api` implements these endpoints:
 
-| Endpoint                         |  Method  | Required Permission | Required Feature Flag | Default Behavior                                               |
+| Endpoint                         |  Method  | Required Permission | Required Feature Flag | Behavior & Scope                                               |
 | :------------------------------- | :------: | :------------------ | :-------------------- | :------------------------------------------------------------- |
 | `/api/me`                        |  `GET`   | Authenticated       | None                  | Returns active user profile, effective permissions, and flags. |
 | `/api/feature-flags`             |  `GET`   | Public              | None                  | Lists all system feature flags.                                |
-| `/api/feature-flags/:key/toggle` |  `POST`  | Public              | None                  | Toggles a feature flag for live experimentation.               |
+| `/api/feature-flags/:key/toggle` |  `POST`  | `settings.manage`   | None                  | **Protected**: Toggles a feature flag (Admin clearance).       |
+| `/api/reset`                     |  `POST`  | `settings.manage`   | None                  | **Protected**: Resets in-memory demo data (Admin clearance).   |
 | `/api/reports`                   |  `GET`   | `reports.view`      | None                  | Lists compliance and security audit reports.                   |
-| `/api/reports/export`            |  `GET`   | `reports.view`      | `export-reports`      | Streams CSV download of audit reports.                         |
+| `/api/reports/export`            |  `GET`   | `reports.view`      | `export-reports`      | Streams RFC 4180 escaped CSV download of audit reports.        |
 | `/api/users`                     |  `GET`   | `users.read`        | None                  | Lists system user accounts (Admin & Manager).                  |
 | `/api/users/:id`                 | `DELETE` | `users.delete`      | None                  | Deletes user record (Admin only).                              |
 | `/api/settings`                  |  `GET`   | `settings.manage`   | None                  | Retrieves tenant security configurations (Admin only).         |
-| `/api/docs`                      |  `GET`   | Public              | None                  | Interactive Swagger UI API documentation.                      |
+| `/api/docs`                      |  `GET`   | Public              | None                  | Swagger UI API explorer (reference specification).             |
 
 ---
 
 ## 🧪 Testing
 
-Gatekeeper features full test coverage using **Vitest** for core logic, **React Testing Library** for frontend hooks and components, and **Supertest** for Express middleware.
+Gatekeeper features comprehensive test coverage using **Vitest** for core logic, **React Testing Library** for frontend components/loading states, and **Supertest** for Express middleware and API routes.
 
 Run the test suites across all packages:
 
@@ -241,18 +260,21 @@ pnpm format
 
 ### Verified Test Cases:
 
-- ✅ **Admin Access**: Verifies full access to user management, reports, and tenant settings.
-- ✅ **Manager Access**: Verifies granted access to users.read and reports.view, and denial for users.delete and settings.manage.
-- ✅ **Member Denial**: Verifies strict denial (403) for administrative and management operations.
-- ✅ **Direct Permissions**: Verifies direct user grants combine cleanly with role policies without race conditions.
-- ✅ **Missing Authenticated User**: Verifies clean HTTP 401 response when `req.user` or auth context is absent.
-- ✅ **Disabled Feature Flags**: Verifies that routes and UI components correctly deny or hide disabled features.
+- ✅ **Admin Access**: Full access confirmed across user management, reports, settings, and mutation endpoints.
+- ✅ **Manager Access**: Access granted for `users.read` and `reports.view`; strictly denied (403) for deletions, settings, and mutations.
+- ✅ **Member Denial**: Strict denial (403) for administrative and management operations.
+- ✅ **Direct Permissions**: Direct user grants combine cleanly with role policies.
+- ✅ **Missing Authenticated User**: Clean HTTP 401 response when auth context is absent.
+- ✅ **Custom Middleware Callbacks**: Verifies custom `onUnauthorized`, `onForbidden`, `getUser`, and `getFlags` execution.
+- ✅ **Protected Mutations**: Verifies `/api/feature-flags/:key/toggle` and `/api/reset` require `settings.manage` (401 unauthenticated, 403 manager/member, 200 admin).
+- ✅ **RFC 4180 CSV Escaping**: Validates proper escaping for double quotes (`""`), commas, line breaks (`\n` and `\r\n`), and special characters.
+- ✅ **Fail-Safe Loading**: Confirms `<Feature>` and `useFeatureFlag` fail safe during `isLoading` without leaking enabled content.
 
 ---
 
 ## 🗺️ Future Roadmap
 
-Gatekeeper is architected with clean dependency injection and functional boundaries to enable future expansions without breaking changes:
+Gatekeeper is architected with clean dependency injection and functional boundaries to enable future expansions:
 
 1. **PostgreSQL Persistence Layer**:
    - Store roles, permissions, user memberships, and flag rules in relational tables using Prisma or Drizzle ORM.
@@ -260,9 +282,11 @@ Gatekeeper is architected with clean dependency injection and functional boundar
    - Built-in strategy to decode and verify JWT claims directly into `GatekeeperUser` instances.
 3. **Structured Audit Logging**:
    - Interceptors emitting cryptographic audit trails for all authorization decisions to SIEM systems (OpenTelemetry, Datadog).
-4. **Multi-Tenancy & Hierarchical Organizations**:
+4. **Auto-Generated OpenAPI Contracts**:
+   - Derive OpenAPI specifications directly from TypeScript route schemas (via Zod or tsoa).
+5. **Multi-Tenancy & Hierarchical Organizations**:
    - Scoped permissions such as `org:123/projects.create` and inherited organizational permission trees.
-5. **NPM Publishing Pipeline**:
+6. **NPM Publishing Pipeline**:
    - Automated semantic versioning and publishing to NPM via Changesets and GitHub Actions.
 
 ---

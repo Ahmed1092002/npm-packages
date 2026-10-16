@@ -9,7 +9,7 @@ interface ApiRequestPanelProps {
 
 export const ApiRequestPanel: React.FC<ApiRequestPanelProps> = ({ currentUser }) => {
   const [selectedEndpoint, setSelectedEndpoint] = useState<string>('/api/reports');
-  const [selectedMethod, setSelectedMethod] = useState<'GET' | 'DELETE'>('GET');
+  const [selectedMethod, setSelectedMethod] = useState<'GET' | 'POST' | 'DELETE'>('GET');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [result, setResult] = useState<ApiCallResult | null>(null);
 
@@ -43,6 +43,18 @@ export const ApiRequestPanel: React.FC<ApiRequestPanelProps> = ({ currentUser })
       method: 'DELETE' as const,
       endpoint: '/api/users/user-member',
       desc: 'requires users.delete (Admin)',
+    },
+    {
+      label: 'Toggle Feature Flag',
+      method: 'POST' as const,
+      endpoint: '/api/feature-flags/beta-analytics/toggle',
+      desc: 'requires settings.manage (Admin)',
+    },
+    {
+      label: 'Reset Demo Store',
+      method: 'POST' as const,
+      endpoint: '/api/reset',
+      desc: 'requires settings.manage (Admin)',
     },
     {
       label: 'Access System Settings',
@@ -195,7 +207,9 @@ export const ApiRequestPanel: React.FC<ApiRequestPanelProps> = ({ currentUser })
                     className={`font-mono text-[10px] px-1 rounded ${
                       preset.method === 'DELETE'
                         ? 'bg-rose-900/60 text-rose-300'
-                        : 'bg-blue-900/60 text-blue-300'
+                        : preset.method === 'POST'
+                          ? 'bg-emerald-900/60 text-emerald-300'
+                          : 'bg-blue-900/60 text-blue-300'
                     }`}
                   >
                     {preset.method}
@@ -212,10 +226,11 @@ export const ApiRequestPanel: React.FC<ApiRequestPanelProps> = ({ currentUser })
       <div className="flex flex-col sm:flex-row items-center gap-2 mb-4">
         <select
           value={selectedMethod}
-          onChange={(e) => setSelectedMethod(e.target.value as 'GET' | 'DELETE')}
+          onChange={(e) => setSelectedMethod(e.target.value as 'GET' | 'POST' | 'DELETE')}
           className="w-full sm:w-28 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs font-mono font-semibold text-white focus:outline-none focus:border-blue-500"
         >
           <option value="GET">GET</option>
+          <option value="POST">POST</option>
           <option value="DELETE">DELETE</option>
         </select>
 

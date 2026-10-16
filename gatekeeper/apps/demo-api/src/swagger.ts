@@ -4,7 +4,7 @@ export const swaggerDocument = {
     title: 'Gatekeeper Demo API',
     version: '1.0.0',
     description:
-      'Reference implementation of an Express backend guarded by @gatekeeper/express middleware and @gatekeeper/core RBAC.',
+      'Reference implementation of an Express backend guarded by @gatekeeper/express middleware and @gatekeeper/core RBAC. Note: This OpenAPI specification is currently manually maintained for demonstration and exploratory purposes, rather than auto-generated from route declarations.',
   },
   servers: [
     {
@@ -112,6 +112,42 @@ export const swaggerDocument = {
         },
       },
     },
+    '/api/feature-flags/{key}/toggle': {
+      post: {
+        summary: 'Toggle feature flag state',
+        tags: ['Feature Flags'],
+        description: 'Requires "settings.manage" permission (admin only).',
+        parameters: [
+          {
+            name: 'key',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Key of the feature flag to toggle',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Flag successfully toggled',
+          },
+          401: {
+            description: 'Unauthorized (missing x-demo-user-id header)',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } },
+            },
+          },
+          403: {
+            description: 'Forbidden (lacks settings.manage)',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } },
+            },
+          },
+          404: {
+            description: 'Flag not found',
+          },
+        },
+      },
+    },
     '/api/reports': {
       get: {
         summary: 'List reports',
@@ -140,6 +176,29 @@ export const swaggerDocument = {
             content: {
               'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } },
             },
+          },
+        },
+      },
+    },
+    '/api/reports/export': {
+      get: {
+        summary: 'Export reports as CSV',
+        tags: ['Reports'],
+        description: 'Requires "reports.view" permission and "export-reports" feature flag.',
+        responses: {
+          200: {
+            description: 'CSV document containing reports',
+            content: {
+              'text/csv': {
+                schema: { type: 'string' },
+              },
+            },
+          },
+          401: {
+            description: 'Unauthorized',
+          },
+          403: {
+            description: 'Forbidden (missing permission or feature flag disabled)',
           },
         },
       },
@@ -214,6 +273,24 @@ export const swaggerDocument = {
         responses: {
           200: {
             description: 'Current system configuration settings',
+          },
+          401: {
+            description: 'Unauthorized',
+          },
+          403: {
+            description: 'Forbidden (lacks settings.manage)',
+          },
+        },
+      },
+    },
+    '/api/reset': {
+      post: {
+        summary: 'Reset in-memory demo data store to initial seed values',
+        tags: ['System'],
+        description: 'Requires "settings.manage" permission (admin only).',
+        responses: {
+          200: {
+            description: 'Demo store reset successfully',
           },
           401: {
             description: 'Unauthorized',

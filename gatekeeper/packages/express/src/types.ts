@@ -1,4 +1,12 @@
+import type { Request, Response } from 'express';
 import type { GatekeeperUser, Permission, RolePermissionsMap } from '@gatekeeper/core';
+
+export type UnauthorizedHandler = (res: Response, req: Request) => void | Promise<void>;
+export type ForbiddenHandler = (
+  res: Response,
+  missingPermissions: Permission[],
+  req: Request,
+) => void | Promise<void>;
 
 // Safely extend the Express namespace so TypeScript consumers get typing for req.user
 declare global {
@@ -6,6 +14,7 @@ declare global {
     interface Request {
       user?: GatekeeperUser;
       gatekeeperFlags?: Record<string, boolean>;
+      gatekeeperOptions?: GatekeeperMiddlewareOptions;
       can?: (permission: Permission) => boolean;
     }
   }
@@ -20,29 +29,37 @@ export interface GatekeeperMiddlewareOptions {
   /**
    * Optional custom user extractor if user is stored in a non-standard property.
    */
-  getUser?: (req: unknown) => GatekeeperUser | undefined | null;
+  getUser?: (req: Request) => GatekeeperUser | undefined | null;
 
   /**
    * Optional feature flag resolver.
    */
-  getFlags?: (req: unknown) => Record<string, boolean> | undefined;
+  getFlags?: (req: Request) => Record<string, boolean> | undefined;
 
   /**
-   * Custom unauthorized response handler for missing users (defaults to 401).
+   * Custom unauthorized response handler for missing users (defaults to 401 JSON).
    */
-  onUnauthorized?: (res: unknown) => void;
+  onUnauthorized?: UnauthorizedHandler;
 
   /**
-   * Custom forbidden response handler for denied permissions (defaults to 403).
+   * Custom forbidden response handler for denied permissions (defaults to 403 JSON).
    */
-  onForbidden?: (res: unknown, missingPermissions: Permission[]) => void;
+  onForbidden?: ForbiddenHandler;
 }
 
 export interface PermissionMiddlewareOptions {
   roleMap?: RolePermissionsMap;
-  getUser?: (req: unknown) => GatekeeperUser | undefined | null;
+  getUser?: (req: Request) => GatekeeperUser | undefined | null;
+  /**
+   * Custom unauthorized response handler overriding global settings.
+   */
+  onUnauthorized?: UnauthorizedHandler;
+  /**
+   * Custom forbidden response handler overriding global settings.
+   */
+  onForbidden?: ForbiddenHandler;
 }
 
 export interface FeatureFlagMiddlewareOptions {
-  getFlags?: (req: unknown) => Record<string, boolean> | undefined;
+  getFlags?: (req: Request) => Record<string, boolean> | undefined;
 }

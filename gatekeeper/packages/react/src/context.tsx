@@ -32,8 +32,9 @@ export const GatekeeperProvider: React.FC<GatekeeperProviderProps> = ({
   const normalizedFlags = useMemo(() => normalizeFeatureFlags(rawFlags), [rawFlags]);
 
   const effectivePermissions = useMemo(() => {
+    if (isLoading) return [];
     return Array.from(getUserEffectivePermissions(activeUser, roleMap));
-  }, [activeUser, roleMap]);
+  }, [activeUser, roleMap, isLoading]);
 
   const contextValue = useMemo<GatekeeperContextValue>(() => {
     return {
@@ -54,6 +55,7 @@ export const GatekeeperProvider: React.FC<GatekeeperProviderProps> = ({
         return coreCanAny(activeUser, permissions, roleMap);
       },
       isFeatureEnabled: (flagKey: string) => {
+        if (isLoading) return false;
         return coreIsFeatureEnabled(normalizedFlags, flagKey);
       },
       effectivePermissions,

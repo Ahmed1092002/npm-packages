@@ -5,6 +5,7 @@ import { getUserEffectivePermissions } from '@gatekeeper/core';
 import { gatekeeperMiddleware, requireFeatureFlag, requirePermission } from '@gatekeeper/express';
 import { store } from './data.js';
 import { swaggerDocument } from './swagger.js';
+import { formatCsv } from './csv.js';
 
 export function createServer() {
   const app = express();
@@ -73,24 +74,29 @@ export function createServer() {
 
   /**
    * POST /api/feature-flags/:key/toggle
+   * Protected: requires 'settings.manage'
    * Allows toggling a feature flag for live experimentation in the demo.
    */
-  app.post('/api/feature-flags/:key/toggle', (req: Request, res: Response) => {
-    const { key } = req.params;
-    const currentFlags = store.getFlags();
-    const flag = currentFlags.find((f) => f.key === key);
+  app.post(
+    '/api/feature-flags/:key/toggle',
+    requirePermission('settings.manage'),
+    (req: Request, res: Response) => {
+      const { key } = req.params;
+      const currentFlags = store.getFlags();
+      const flag = currentFlags.find((f) => f.key === key);
 
-    if (!flag) {
-      res.status(404).json({ error: 'NOT_FOUND', message: `Flag '${key}' not found.` });
-      return;
-    }
+      if (!flag) {
+        res.status(404).json({ error: 'NOT_FOUND', message: `Flag '${key}' not found.` });
+        return;
+      }
 
-    store.setFlag(key, !flag.enabled);
-    res.json({
-      message: `Feature flag '${key}' is now ${!flag.enabled ? 'enabled' : 'disabled'}.`,
-      flags: store.getFlags(),
-    });
-  });
+      store.setFlag(key, !flag.enabled);
+      res.json({
+        message: `Feature flag '${key}' is now ${!flag.enabled ? 'enabled' : 'disabled'}.`,
+        flags: store.getFlags(),
+      });
+    },
+  );
 
   /**
    * GET /api/reports
@@ -113,16 +119,14 @@ export function createServer() {
     requireFeatureFlag('export-reports'),
     (_req: Request, res: Response) => {
       const reports = store.getReports();
-      const csvHeader = 'ID,Title,Category,Date,Status,Summary\n';
-      const csvRows = reports
-        .map(
-          (r) => `"${r.id}","${r.title}","${r.category}","${r.date}","${r.status}","${r.summary}"`,
-        )
-        .join('\n');
+      const csv = formatCsv(
+        ['ID', 'Title', 'Category', 'Date', 'Status', 'Summary'],
+        reports.map((r) => [r.id, r.title, r.category, r.date, r.status, r.summary]),
+      );
 
-      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
       res.setHeader('Content-Disposition', 'attachment; filename="reports-export.csv"');
-      res.send(csvHeader + csvRows);
+      res.send(csv);
     },
   );
 
@@ -173,9 +177,10 @@ export function createServer() {
 
   /**
    * POST /api/reset
+   * Protected: requires 'settings.manage'
    * Resets in-memory demo data to original seed
    */
-  app.post('/api/reset', (_req: Request, res: Response) => {
+  app.post('/api/reset', requirePermission('settings.manage'), (_req: Request, res: Response) => {
     store.reset();
     res.json({ success: true, message: 'Demo store reset to seed data.' });
   });

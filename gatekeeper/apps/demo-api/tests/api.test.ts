@@ -27,6 +27,18 @@ describe('Demo API Integration Tests', () => {
       const res = await request(app).get('/api/reports');
       expect(res.status).toBe(401);
     });
+
+    it('returns 401 on protected POST /api/feature-flags/:key/toggle', async () => {
+      const res = await request(app).post('/api/feature-flags/new-dashboard/toggle');
+      expect(res.status).toBe(401);
+      expect(res.body.error).toBe('UNAUTHORIZED');
+    });
+
+    it('returns 401 on protected POST /api/reset', async () => {
+      const res = await request(app).post('/api/reset');
+      expect(res.status).toBe(401);
+      expect(res.body.error).toBe('UNAUTHORIZED');
+    });
   });
 
   describe('Admin User (x-demo-user-id: user-admin)', () => {
@@ -68,6 +80,41 @@ describe('Demo API Integration Tests', () => {
       expect(res.status).toBe(200);
       expect(res.body.reports.length).toBeGreaterThan(0);
     });
+
+    it('can toggle feature flags via POST /api/feature-flags/:key/toggle', async () => {
+      const toggleRes = await request(app)
+        .post('/api/feature-flags/beta-analytics/toggle')
+        .set(adminHeader);
+
+      expect(toggleRes.status).toBe(200);
+      expect(toggleRes.body.message).toContain('beta-analytics');
+
+      const flag = store.getFlags().find((f) => f.key === 'beta-analytics');
+      expect(flag?.enabled).toBe(true);
+    });
+
+    it('returns 404 when toggling non-existent flag as admin', async () => {
+      const res = await request(app)
+        .post('/api/feature-flags/non-existent-flag/toggle')
+        .set(adminHeader);
+
+      expect(res.status).toBe(404);
+      expect(res.body.error).toBe('NOT_FOUND');
+    });
+
+    it('can reset demo store via POST /api/reset', async () => {
+      // Mutate something first
+      store.deleteUser('user-manager');
+      expect(store.findUserById('user-manager')).toBeUndefined();
+
+      // Reset
+      const res = await request(app).post('/api/reset').set(adminHeader);
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+
+      // Verify reset restored users
+      expect(store.findUserById('user-manager')).toBeDefined();
+    });
   });
 
   describe('Manager User (x-demo-user-id: user-manager)', () => {
@@ -96,6 +143,20 @@ describe('Demo API Integration Tests', () => {
       const res = await request(app).get('/api/settings').set(managerHeader);
       expect(res.status).toBe(403);
     });
+
+    it('is forbidden from toggling feature flags (403)', async () => {
+      const res = await request(app)
+        .post('/api/feature-flags/beta-analytics/toggle')
+        .set(managerHeader);
+      expect(res.status).toBe(403);
+      expect(res.body.error).toBe('FORBIDDEN');
+    });
+
+    it('is forbidden from resetting demo store (403)', async () => {
+      const res = await request(app).post('/api/reset').set(managerHeader);
+      expect(res.status).toBe(403);
+      expect(res.body.error).toBe('FORBIDDEN');
+    });
   });
 
   describe('Member User (x-demo-user-id: user-member)', () => {
@@ -121,6 +182,20 @@ describe('Demo API Integration Tests', () => {
       const res = await request(app).get('/api/settings').set(memberHeader);
       expect(res.status).toBe(403);
     });
+
+    it('is forbidden from toggling feature flags (403)', async () => {
+      const res = await request(app)
+        .post('/api/feature-flags/new-dashboard/toggle')
+        .set(memberHeader);
+      expect(res.status).toBe(403);
+      expect(res.body.error).toBe('FORBIDDEN');
+    });
+
+    it('is forbidden from resetting demo store (403)', async () => {
+      const res = await request(app).post('/api/reset').set(memberHeader);
+      expect(res.status).toBe(403);
+      expect(res.body.error).toBe('FORBIDDEN');
+    });
   });
 
   describe('Feature Flag guarded routes & OpenAPI spec', () => {
@@ -128,6 +203,8 @@ describe('Demo API Integration Tests', () => {
       const res = await request(app).get('/api/docs/json');
       expect(res.status).toBe(200);
       expect(res.body.openapi).toBe('3.0.3');
+      expect(res.body.paths['/api/feature-flags/{key}/toggle']).toBeDefined();
+      expect(res.body.paths['/api/reset']).toBeDefined();
     });
 
     it('allows exporting reports when export-reports flag is enabled', async () => {
@@ -136,6 +213,29 @@ describe('Demo API Integration Tests', () => {
         .set({ 'x-demo-user-id': 'user-admin' });
       expect(res.status).toBe(200);
       expect(res.header['content-type']).toContain('text/csv');
+      expect(res.text).toContain('ID,Title,Category,Date,Status,Summary');
+    });
+
+    it('safely escapes commas, quotes, and newlines in exported CSV reports', async () => {
+      const reports = store.getReports();
+      reports.push({
+        id: 'rep-test-csv',
+        title: 'Audit: "Executive, Summary"',
+        category: 'Security',
+        date: '2026-10-16',
+        status: 'Ready',
+        summary: 'Paragraph 1,\nParagraph 2 with "quoted" remarks.',
+      });
+
+      const res = await request(app)
+        .get('/api/reports/export')
+        .set({ 'x-demo-user-id': 'user-admin' });
+
+      expect(res.status).toBe(200);
+      expect(res.text).toContain('rep-test-csv');
+      // Verify proper RFC 4180 escaping
+      expect(res.text).toContain('"Audit: ""Executive, Summary"""');
+      expect(res.text).toContain('"Paragraph 1,\nParagraph 2 with ""quoted"" remarks."');
     });
 
     it('denies exporting reports when flag is toggled off', async () => {
