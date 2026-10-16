@@ -1,7 +1,29 @@
 {
-  "name": "@gatekeeper/core",
-  "version": "1.0.0",
-  "description": "Pure framework-independent authorization and feature-flag toolkit",
+  "name": "@ahmedtamer/gatekeeper-core",
+  "version": "0.1.0",
+  "description": "Pure framework-independent authorization and feature-flag evaluator for TypeScript",
+  "keywords": [
+    "authorization",
+    "rbac",
+    "abac",
+    "permissions",
+    "feature-flags",
+    "typescript"
+  ],
+  "author": "Ahmed Tamer",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ahmed1092002/npm-packages.git",
+    "directory": "gatekeeper/packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/Ahmed1092002/npm-packages/issues"
+  },
+  "homepage": "https://github.com/Ahmed1092002/npm-packages/tree/main/gatekeeper#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -14,11 +36,14 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts --clean",
     "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
+    "prepack": "pnpm run build",
     "test": "vitest run",
     "lint": "eslint src"
   },

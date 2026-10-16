@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Users, UserPlus, Trash2, ShieldAlert, CheckCircle2 } from 'lucide-react';
-import { Can } from '@gatekeeper/react';
+import { Can } from '@ahmedtamer/gatekeeper-react';
 
 interface UserRecord {
   id: string;

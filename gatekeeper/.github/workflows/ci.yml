@@ -1,0 +1,48 @@
+name: CI & Packaging Verification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    name: Lint, Test, Build & Dry-Run Packaging
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify Formatting
+        run: pnpm format
+
+      - name: Run ESLint
+        run: pnpm lint
+
+      - name: Run Test Suites
+        run: pnpm test
+
+      - name: Build All Workspaces
+        run: pnpm build
+
+      - name: Verify Package Tarballs (Dry Run)
+        run: |
+          pnpm --filter @ahmedtamer/gatekeeper-core pack --dry-run
+          pnpm --filter @ahmedtamer/gatekeeper-react pack --dry-run
+          pnpm --filter @ahmedtamer/gatekeeper-express pack --dry-run

@@ -1,5 +1,5 @@
-import type { Request, Response } from 'express';
-import type { GatekeeperUser, Permission, RolePermissionsMap } from '@gatekeeper/core';
+﻿import type { Request, Response } from 'express';
+import type { GatekeeperUser, Permission, RolePermissionsMap } from '@ahmedtamer/gatekeeper-core';
 
 export type UnauthorizedHandler = (res: Response, req: Request) => void | Promise<void>;
 export type ForbiddenHandler = (

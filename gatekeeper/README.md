@@ -1,4 +1,4 @@
-# 🛡️ Gatekeeper
+﻿# 🛡️ Gatekeeper
 
 > **Portfolio-quality, production-minded authorization and feature-flag toolkit for full-stack TypeScript applications.**
 
@@ -20,9 +20,9 @@ Gatekeeper provides declarative, type-safe permission checks and dynamic feature
 ```mermaid
 graph TD
     subgraph Monorepo ["Gatekeeper Monorepo (pnpm workspaces)"]
-        Core["@gatekeeper/core<br/>- Pure functional evaluator<br/>- RBAC + Direct User Grants<br/>- Feature Flag Resolution"]
-        ReactPkg["@gatekeeper/react<br/>- GatekeeperProvider (fail-safe loading)<br/>- &lt;Can&gt; & &lt;Feature&gt; components<br/>- usePermission & useFeatureFlag"]
-        ExpressPkg["@gatekeeper/express<br/>- requirePermission() middleware<br/>- requireAnyPermission() middleware<br/>- requireFeatureFlag() middleware<br/>- onUnauthorized & onForbidden handlers"]
+        Core["@ahmedtamer/gatekeeper-core<br/>- Pure functional evaluator<br/>- RBAC + Direct User Grants<br/>- Feature Flag Resolution"]
+        ReactPkg["@ahmedtamer/gatekeeper-react<br/>- GatekeeperProvider (fail-safe loading)<br/>- &lt;Can&gt; & &lt;Feature&gt; components<br/>- usePermission & useFeatureFlag"]
+        ExpressPkg["@ahmedtamer/gatekeeper-express<br/>- requirePermission() middleware<br/>- requireAnyPermission() middleware<br/>- requireFeatureFlag() middleware<br/>- onUnauthorized & onForbidden handlers"]
         DemoDashboard["apps/demo-dashboard<br/>- React 19 + Vite + Tailwind CSS<br/>- Real-time RBAC matrix & API probe"]
         DemoApi["apps/demo-api<br/>- Node.js + Express + TypeScript<br/>- Protected mutations & RFC 4180 CSV export"]
     end
@@ -40,11 +40,11 @@ graph TD
 
 ## 📦 Packages Overview
 
-| Package                                     | Status            | Description                                                                                 |
-| :------------------------------------------ | :---------------- | :------------------------------------------------------------------------------------------ |
-| [`@gatekeeper/core`](./packages/core)       | Portfolio-Quality | Framework-independent types, role-to-permission mappings, and pure `can()` evaluators.      |
-| [`@gatekeeper/react`](./packages/react)     | Portfolio-Quality | React context provider, fail-safe loading state, `<Can>` / `<Feature>`, and reactive hooks. |
-| [`@gatekeeper/express`](./packages/express) | Portfolio-Quality | Express route guards with customizable `onUnauthorized` and `onForbidden` callbacks.        |
+| Package                                                | Status            | Description                                                                                 |
+| :----------------------------------------------------- | :---------------- | :------------------------------------------------------------------------------------------ |
+| [`@ahmedtamer/gatekeeper-core`](./packages/core)       | Portfolio-Quality | Framework-independent types, role-to-permission mappings, and pure `can()` evaluators.      |
+| [`@ahmedtamer/gatekeeper-react`](./packages/react)     | Portfolio-Quality | React context provider, fail-safe loading state, `<Can>` / `<Feature>`, and reactive hooks. |
+| [`@ahmedtamer/gatekeeper-express`](./packages/express) | Portfolio-Quality | Express route guards with customizable `onUnauthorized` and `onForbidden` callbacks.        |
 
 ---
 
@@ -53,31 +53,37 @@ graph TD
 ### Frontend (React)
 
 ```bash
-pnpm add @gatekeeper/core @gatekeeper/react
+pnpm add @ahmedtamer/gatekeeper-core @ahmedtamer/gatekeeper-react
 # or
-npm install @gatekeeper/core @gatekeeper/react
+npm install @ahmedtamer/gatekeeper-core @ahmedtamer/gatekeeper-react
 ```
 
 ### Backend (Express)
 
 ```bash
-pnpm add @gatekeeper/core @gatekeeper/express
+pnpm add @ahmedtamer/gatekeeper-core @ahmedtamer/gatekeeper-express
 # or
-npm install @gatekeeper/core @gatekeeper/express
+npm install @ahmedtamer/gatekeeper-core @ahmedtamer/gatekeeper-express
 ```
 
 ---
 
 ## 💡 Usage Examples
 
-### 1. React (`@gatekeeper/react`)
+### 1. React (`@ahmedtamer/gatekeeper-react`)
 
 Wrap your application in `GatekeeperProvider` and use declarative components or hooks. During loading states (`isLoading = true`), all permission checks and feature flags fail safe (evaluated as `false`) to prevent flashes of unauthorized UI:
 
 ```tsx
 import React from 'react';
-import { GatekeeperProvider, Can, Feature, usePermission, useFeatureFlag } from '@gatekeeper/react';
-import type { GatekeeperUser } from '@gatekeeper/core';
+import {
+  GatekeeperProvider,
+  Can,
+  Feature,
+  usePermission,
+  useFeatureFlag,
+} from '@ahmedtamer/gatekeeper-react';
+import type { GatekeeperUser } from '@ahmedtamer/gatekeeper-core';
 
 const currentUser: GatekeeperUser = {
   id: 'usr_100',
@@ -126,7 +132,7 @@ function MainLayout() {
 
 ---
 
-### 2. Express Backend (`@gatekeeper/express`)
+### 2. Express Backend (`@ahmedtamer/gatekeeper-express`)
 
 Protect routes using declarative middleware. Missing authentication defaults to `401 Unauthorized`; insufficient privileges return `403 Forbidden`. You can also supply custom failure handlers:
 
@@ -137,8 +143,8 @@ import {
   requirePermission,
   requireAnyPermission,
   requireFeatureFlag,
-} from '@gatekeeper/express';
-import type { GatekeeperUser } from '@gatekeeper/core';
+} from '@ahmedtamer/gatekeeper-express';
+import type { GatekeeperUser } from '@ahmedtamer/gatekeeper-core';
 
 const app = express();
 app.use(express.json());
@@ -248,9 +254,9 @@ Run the test suites across all packages:
 pnpm test
 
 # Run tests in specific packages
-pnpm --filter @gatekeeper/core test
-pnpm --filter @gatekeeper/react test
-pnpm --filter @gatekeeper/express test
+pnpm --filter @ahmedtamer/gatekeeper-core test
+pnpm --filter @ahmedtamer/gatekeeper-react test
+pnpm --filter @ahmedtamer/gatekeeper-express test
 pnpm --filter demo-api test
 
 # Type checking and linting

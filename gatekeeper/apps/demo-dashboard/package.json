@@ -10,8 +10,8 @@
     "lint": "eslint src"
   },
   "dependencies": {
-    "@gatekeeper/core": "workspace:*",
-    "@gatekeeper/react": "workspace:*",
+    "@ahmedtamer/gatekeeper-core": "workspace:*",
+    "@ahmedtamer/gatekeeper-react": "workspace:*",
     "lucide-react": "^0.475.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

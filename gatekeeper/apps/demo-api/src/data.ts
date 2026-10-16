@@ -1,4 +1,4 @@
-import type { FeatureFlag, GatekeeperUser } from '@gatekeeper/core';
+﻿import type { FeatureFlag, GatekeeperUser } from '@ahmedtamer/gatekeeper-core';
 
 export interface DemoReport {
   id: string;

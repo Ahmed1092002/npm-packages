@@ -1,4 +1,4 @@
-import React, { createContext, useMemo } from 'react';
+﻿import React, { createContext, useMemo } from 'react';
 import {
   DEFAULT_ROLE_PERMISSIONS,
   can as coreCan,
@@ -8,7 +8,7 @@ import {
   isFeatureEnabled as coreIsFeatureEnabled,
   normalizeFeatureFlags,
   type Permission,
-} from '@gatekeeper/core';
+} from '@ahmedtamer/gatekeeper-core';
 import type { GatekeeperContextValue, GatekeeperProviderProps } from './types.js';
 
 export const GatekeeperContext = createContext<GatekeeperContextValue | null>(null);

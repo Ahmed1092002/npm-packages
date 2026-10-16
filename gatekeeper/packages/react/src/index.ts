@@ -1,4 +1,4 @@
-export * from './types.js';
+﻿export * from './types.js';
 export * from './context.js';
 export * from './hooks.js';
 export * from './components.js';
@@ -11,4 +11,4 @@ export type {
   FeatureFlag,
   RolePermissionsMap,
   AuthorizationResult,
-} from '@gatekeeper/core';
+} from '@ahmedtamer/gatekeeper-core';

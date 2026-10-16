@@ -1,7 +1,30 @@
 {
-  "name": "@gatekeeper/react",
-  "version": "1.0.0",
-  "description": "React authorization and feature-flag toolkit powered by Gatekeeper Core",
+  "name": "@ahmedtamer/gatekeeper-react",
+  "version": "0.1.0",
+  "description": "React authorization and feature-flag toolkit with fail-safe loading state powered by Gatekeeper Core",
+  "keywords": [
+    "react",
+    "authorization",
+    "permissions",
+    "feature-flags",
+    "rbac",
+    "hooks",
+    "components"
+  ],
+  "author": "Ahmed Tamer",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ahmed1092002/npm-packages.git",
+    "directory": "gatekeeper/packages/react"
+  },
+  "bugs": {
+    "url": "https://github.com/Ahmed1092002/npm-packages/issues"
+  },
+  "homepage": "https://github.com/Ahmed1092002/npm-packages/tree/main/gatekeeper#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -14,11 +37,14 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts --clean --external react,react-dom",
-    "dev": "tsup src/index.ts --format esm,cjs --dts --watch --external react,react-dom",
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean --external react,react-dom,@ahmedtamer/gatekeeper-core",
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch --external react,react-dom,@ahmedtamer/gatekeeper-core",
+    "prepack": "pnpm run build",
     "test": "vitest run",
     "lint": "eslint src"
   },
@@ -27,7 +53,7 @@
     "react-dom": ">=18.0.0"
   },
   "dependencies": {
-    "@gatekeeper/core": "workspace:*"
+    "@ahmedtamer/gatekeeper-core": "workspace:^0.1.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",

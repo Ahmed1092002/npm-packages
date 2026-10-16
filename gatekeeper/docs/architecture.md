@@ -1,4 +1,4 @@
-# Gatekeeper Architecture & Technical Design
+﻿# Gatekeeper Architecture & Technical Design
 
 ## 1. Overview & Philosophy
 
@@ -7,12 +7,12 @@
 ```mermaid
 graph TD
     subgraph Core Layer
-        Core["@gatekeeper/core<br/>- Pure functional evaluator<br/>- RBAC + Direct Grants<br/>- Feature Flag Resolution"]
+        Core["@ahmedtamer/gatekeeper-core<br/>- Pure functional evaluator<br/>- RBAC + Direct Grants<br/>- Feature Flag Resolution"]
     end
 
     subgraph Integration Packages
-        ReactPkg["@gatekeeper/react<br/>- GatekeeperProvider<br/>- Can & Feature components<br/>- usePermission & useFeatureFlag"]
-        ExpressPkg["@gatekeeper/express<br/>- requirePermission()<br/>- requireAnyPermission()<br/>- requireFeatureFlag()<br/>- req.user augmentation"]
+        ReactPkg["@ahmedtamer/gatekeeper-react<br/>- GatekeeperProvider<br/>- Can & Feature components<br/>- usePermission & useFeatureFlag"]
+        ExpressPkg["@ahmedtamer/gatekeeper-express<br/>- requirePermission()<br/>- requireAnyPermission()<br/>- requireFeatureFlag()<br/>- req.user augmentation"]
     end
 
     subgraph Reference Applications
@@ -33,7 +33,7 @@ graph TD
 
 ### Pure Authorization Function (`can`)
 
-The evaluator function in `@gatekeeper/core` is a deterministic, side-effect free function:
+The evaluator function in `@ahmedtamer/gatekeeper-core` is a deterministic, side-effect free function:
 
 ```typescript
 function can(
@@ -55,13 +55,13 @@ function can(
 
 ## 3. Package Structure
 
-### `@gatekeeper/core`
+### `@ahmedtamer/gatekeeper-core`
 
 - **Zero runtime dependencies**: Extremely fast and lightweight.
 - **Framework independent**: Operates in browsers, Node.js, Cloudflare Workers, Deno, Bun, and React Native.
 - **Strict typing**: Fully typed permissions and roles with open-ended extension through string literal unions.
 
-### `@gatekeeper/react`
+### `@ahmedtamer/gatekeeper-react`
 
 - **Context-driven caching**: Memoizes effective permission sets to minimize evaluation overhead during re-renders.
 - **Component Primitives**:
@@ -72,7 +72,7 @@ function can(
   - `useFeatureFlag(key)`: Returns boolean flag state.
   - `useGatekeeper()`: Accesses complete context including `user`, `flags`, and `can`.
 
-### `@gatekeeper/express`
+### `@ahmedtamer/gatekeeper-express`
 
 - **Declarative Middleware**:
   - `requirePermission('users.read')`: Enforces required permission, returning HTTP 401 when unauthenticated and HTTP 403 when forbidden.
@@ -92,7 +92,7 @@ function can(
 
 ### Fail-Safe React Loading State
 
-In `@gatekeeper/react`, authorization decisions default to closed (`deny`):
+In `@ahmedtamer/gatekeeper-react`, authorization decisions default to closed (`deny`):
 
 - While `isLoading: true`, `isFeatureEnabled()`, `can()`, `canAll()`, and `canAny()` unconditionally evaluate to `false`.
 - Guard components (`<Can>` and `<Feature>`) render their respective `fallback` slots (or `null`) until loading completes.

@@ -1,7 +1,29 @@
 {
-  "name": "@gatekeeper/express",
-  "version": "1.0.0",
-  "description": "Express middleware for authorization and feature flags powered by Gatekeeper Core",
+  "name": "@ahmedtamer/gatekeeper-express",
+  "version": "0.1.0",
+  "description": "Express middleware for authorization and feature flags with customizable callbacks powered by Gatekeeper Core",
+  "keywords": [
+    "express",
+    "middleware",
+    "authorization",
+    "rbac",
+    "permissions",
+    "feature-flags"
+  ],
+  "author": "Ahmed Tamer",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ahmed1092002/npm-packages.git",
+    "directory": "gatekeeper/packages/express"
+  },
+  "bugs": {
+    "url": "https://github.com/Ahmed1092002/npm-packages/issues"
+  },
+  "homepage": "https://github.com/Ahmed1092002/npm-packages/tree/main/gatekeeper#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -14,11 +36,14 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts --clean --external express",
-    "dev": "tsup src/index.ts --format esm,cjs --dts --watch --external express",
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean --external express,@ahmedtamer/gatekeeper-core",
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch --external express,@ahmedtamer/gatekeeper-core",
+    "prepack": "pnpm run build",
     "test": "vitest run",
     "lint": "eslint src"
   },
@@ -26,7 +51,7 @@
     "express": ">=4.18.0"
   },
   "dependencies": {
-    "@gatekeeper/core": "workspace:*"
+    "@ahmedtamer/gatekeeper-core": "workspace:^0.1.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",

@@ -35,10 +35,10 @@ importers:
 
   apps/demo-api:
     dependencies:
-      '@gatekeeper/core':
+      '@ahmedtamer/gatekeeper-core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@gatekeeper/express':
+      '@ahmedtamer/gatekeeper-express':
         specifier: workspace:*
         version: link:../../packages/express
       cors:
@@ -81,10 +81,10 @@ importers:
 
   apps/demo-dashboard:
     dependencies:
-      '@gatekeeper/core':
+      '@ahmedtamer/gatekeeper-core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@gatekeeper/react':
+      '@ahmedtamer/gatekeeper-react':
         specifier: workspace:*
         version: link:../../packages/react
       lucide-react:
@@ -139,8 +139,8 @@ importers:
 
   packages/express:
     dependencies:
-      '@gatekeeper/core':
-        specifier: workspace:*
+      '@ahmedtamer/gatekeeper-core':
+        specifier: workspace:^0.1.0
         version: link:../core
     devDependencies:
       '@types/express':
@@ -167,8 +167,8 @@ importers:
 
   packages/react:
     dependencies:
-      '@gatekeeper/core':
-        specifier: workspace:*
+      '@ahmedtamer/gatekeeper-core':
+        specifier: workspace:^0.1.0
         version: link:../core
     devDependencies:
       '@testing-library/jest-dom':

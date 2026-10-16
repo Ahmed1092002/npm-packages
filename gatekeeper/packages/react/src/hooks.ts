@@ -1,5 +1,5 @@
-import { useContext } from 'react';
-import type { Permission } from '@gatekeeper/core';
+﻿import { useContext } from 'react';
+import type { Permission } from '@ahmedtamer/gatekeeper-core';
 import { GatekeeperContext } from './context.js';
 import type { GatekeeperContextValue } from './types.js';
 

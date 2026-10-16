@@ -1,8 +1,12 @@
-import express, { type Request, type Response, type NextFunction } from 'express';
+﻿import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
-import { getUserEffectivePermissions } from '@gatekeeper/core';
-import { gatekeeperMiddleware, requireFeatureFlag, requirePermission } from '@gatekeeper/express';
+import { getUserEffectivePermissions } from '@ahmedtamer/gatekeeper-core';
+import {
+  gatekeeperMiddleware,
+  requireFeatureFlag,
+  requirePermission,
+} from '@ahmedtamer/gatekeeper-express';
 import { store } from './data.js';
 import { swaggerDocument } from './swagger.js';
 import { formatCsv } from './csv.js';

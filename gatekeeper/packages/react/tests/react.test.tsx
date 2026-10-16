@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import {
@@ -9,9 +9,9 @@ import {
   useGatekeeper,
   usePermission,
 } from '../src/index.js';
-import type { GatekeeperUser } from '@gatekeeper/core';
+import type { GatekeeperUser } from '@ahmedtamer/gatekeeper-core';
 
-describe('@gatekeeper/react', () => {
+describe('@ahmedtamer/gatekeeper-react', () => {
   const adminUser: GatekeeperUser = {
     id: 'user-admin',
     name: 'Admin User',

@@ -1,10 +1,10 @@
-import type { NextFunction, Request, Response, RequestHandler } from 'express';
+﻿import type { NextFunction, Request, Response, RequestHandler } from 'express';
 import {
   can as coreCan,
   canAny as coreCanAny,
   isFeatureEnabled,
   type Permission,
-} from '@gatekeeper/core';
+} from '@ahmedtamer/gatekeeper-core';
 import type {
   FeatureFlagMiddlewareOptions,
   GatekeeperMiddlewareOptions,

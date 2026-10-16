@@ -1,7 +1,7 @@
-import express, { type Request, type Response } from 'express';
+﻿import express, { type Request, type Response } from 'express';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import type { GatekeeperUser } from '@gatekeeper/core';
+import type { GatekeeperUser } from '@ahmedtamer/gatekeeper-core';
 import {
   gatekeeperMiddleware,
   requireAnyPermission,
@@ -9,7 +9,7 @@ import {
   requirePermission,
 } from '../src/index.js';
 
-describe('@gatekeeper/express Middleware', () => {
+describe('@ahmedtamer/gatekeeper-express Middleware', () => {
   const adminUser: GatekeeperUser = {
     id: 'user-admin',
     name: 'Admin User',

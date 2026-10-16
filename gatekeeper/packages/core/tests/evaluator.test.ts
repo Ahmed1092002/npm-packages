@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+﻿import { describe, expect, it } from 'vitest';
 import {
   can,
   canAll,
@@ -12,7 +12,7 @@ import {
   type GatekeeperUser,
 } from '../src/index.js';
 
-describe('@gatekeeper/core - Evaluator & Roles', () => {
+describe('@ahmedtamer/gatekeeper-core - Evaluator & Roles', () => {
   const adminUser: GatekeeperUser = {
     id: 'user-admin',
     name: 'Admin User',

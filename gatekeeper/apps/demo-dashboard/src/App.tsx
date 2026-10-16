@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -7,8 +7,8 @@ import {
   Settings as SettingsIcon,
   ExternalLink,
 } from 'lucide-react';
-import { GatekeeperProvider } from '@gatekeeper/react';
-import type { GatekeeperUser } from '@gatekeeper/core';
+import { GatekeeperProvider } from '@ahmedtamer/gatekeeper-react';
+import type { GatekeeperUser } from '@ahmedtamer/gatekeeper-core';
 
 import { Header } from './components/Header.js';
 import { OverviewPage } from './pages/OverviewPage.js';
