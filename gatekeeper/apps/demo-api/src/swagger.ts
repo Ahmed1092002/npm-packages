@@ -326,5 +326,17 @@ export const swaggerDocument = {
         },
       },
     },
+    '/api/docs/json': {
+      get: {
+        summary: 'Get OpenAPI 3.0 specification in JSON format',
+        tags: ['Documentation'],
+        security: [],
+        responses: {
+          200: {
+            description: 'OpenAPI 3.0 specification document',
+          },
+        },
+      },
+    },
   },
 };

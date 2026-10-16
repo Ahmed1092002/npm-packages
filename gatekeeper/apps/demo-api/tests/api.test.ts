@@ -224,6 +224,7 @@ describe('Demo API Integration Tests', () => {
       // Public endpoints explicitly override global security with empty array
       expect(res.body.paths['/api/feature-flags'].get.security).toEqual([]);
       expect(res.body.paths['/health'].get.security).toEqual([]);
+      expect(res.body.paths['/api/docs/json'].get.security).toEqual([]);
 
       // Protected endpoints inherit global security (no security: [] override)
       expect(res.body.paths['/api/me'].get.security).toBeUndefined();
