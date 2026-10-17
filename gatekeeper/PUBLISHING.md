@@ -4,11 +4,11 @@ This guide describes how to publish the three Gatekeeper library packages under 
 
 ## Published Packages
 
-| Package Directory  | npm Package Name                 | Version | Access |
-| :----------------- | :------------------------------- | :------ | :----- |
-| `packages/core`    | `@ahmed109/gatekeeper-core`    | `0.2.0` | Public |
-| `packages/react`   | `@ahmed109/gatekeeper-react`   | `0.2.0` | Public |
-| `packages/express` | `@ahmed109/gatekeeper-express` | `0.2.0` | Public |
+| Package Directory  | npm Package Name               | Current Version | Access |
+| :----------------- | :----------------------------- | :-------------- | :----- |
+| `packages/core`    | `@ahmed109/gatekeeper-core`    | `0.3.0`         | Public |
+| `packages/react`   | `@ahmed109/gatekeeper-react`   | `0.3.0`         | Public |
+| `packages/express` | `@ahmed109/gatekeeper-express` | `0.3.0`         | Public |
 
 > [!NOTE]
 > The demo applications (`apps/demo-api` and `apps/demo-dashboard`) and the root monorepo are marked `"private": true` and are **never** published to npm.
@@ -17,37 +17,21 @@ This guide describes how to publish the three Gatekeeper library packages under 
 
 ## 1. Prerequisites & npm Authentication
 
-1. Ensure you have an active npm account with permission to publish under `@ahmed109` (either as your personal account username or an npm organization).
-2. Log in via your terminal:
+1. Confirm you are logged in to your npm account:
+   ```bash
+   npm whoami
+   # Output should display: ahmed109
+   ```
+2. If not logged in, authenticate in your terminal:
    ```bash
    npm login
    ```
-3. Confirm authentication:
-   ```bash
-   npm whoami
-   # Output should display: ahmedtamer (or your authenticated npm user)
-   ```
 
 ---
 
-## 2. Check Package Name Availability
+## 2. Pre-Publish Validation (Lint, Test, Build)
 
-Verify that the target scoped package names are available:
-
-```bash
-npm view @ahmed109/gatekeeper-core version
-npm view @ahmed109/gatekeeper-react version
-npm view @ahmed109/gatekeeper-express version
-```
-
-- If an `E404 Not Found` error is returned, the package name is available and ready for first publish.
-- If a version is returned, confirm you have owner/publish rights to that package.
-
----
-
-## 3. Pre-Publish Validation (Lint, Test, Build)
-
-Always run the full test suite and verification commands from the repository root (`G:\npm packages\gatekeeper`):
+Always run the full test suite and verification commands from the repository root:
 
 ```bash
 # 1. Format check
@@ -56,7 +40,7 @@ pnpm format
 # 2. Strict linter (zero warnings)
 pnpm lint
 
-# 3. Vitest test suites (88+ tests)
+# 3. Vitest test suites (107+ tests)
 pnpm test
 
 # 4. Multi-package TypeScript & bundle build
@@ -65,18 +49,20 @@ pnpm build
 
 ---
 
-## 4. Dry-Run Package Tarball Inspection
+## 3. Dry-Run Package Tarball Inspection
 
 Before publishing live, inspect the generated package tarballs using dry-run to ensure only `dist/`, `README.md`, and `LICENSE` are included:
 
 ```bash
-# Inspect core tarball
+# Single command from root
+pnpm publish:dry-run
+```
+
+Or check each package individually:
+
+```bash
 pnpm --filter @ahmed109/gatekeeper-core pack --dry-run
-
-# Inspect react tarball
 pnpm --filter @ahmed109/gatekeeper-react pack --dry-run
-
-# Inspect express tarball
 pnpm --filter @ahmed109/gatekeeper-express pack --dry-run
 ```
 
@@ -84,7 +70,7 @@ Verify that source files (`src/`), tests (`tests/`), and internal configs are **
 
 ---
 
-## 5. Strict Publish Order
+## 4. Strict Publish Order
 
 Because `@ahmed109/gatekeeper-react` and `@ahmed109/gatekeeper-express` depend on `@ahmed109/gatekeeper-core`, you **MUST** publish in this exact order:
 
@@ -94,9 +80,15 @@ graph LR
     Step1 --> Step3["3. @ahmed109/gatekeeper-express"]
 ```
 
-### Exact Publish Commands
+### Option A: Publish All in One Command
 
-Run each publish command from the monorepo root:
+We configured a convenience script in root `package.json` that publishes all three packages in strict dependency order:
+
+```bash
+pnpm publish:packages
+```
+
+### Option B: Publish Manually Step-by-Step
 
 ```bash
 # Step 1: Publish Core
@@ -114,41 +106,27 @@ pnpm --filter @ahmed109/gatekeeper-express publish --access public --no-git-chec
 
 ---
 
-## 6. How to Publish a Patch or Minor Version Later
+## 5. How to Publish a Patch or Minor Release
 
-When releasing bug fixes or new features:
+Because npm does not allow overwriting an already published version (e.g. `0.3.0`), increment the version number before publishing updates:
 
-1. **Bump versions** across the packages:
+1. **Bump versions** across packages:
 
    ```bash
-   # Bump patch (0.1.0 -> 0.1.1)
-   pnpm --filter @ahmed109/gatekeeper-core exec npm version patch
-   pnpm --filter @ahmed109/gatekeeper-react exec npm version patch
-   pnpm --filter @ahmed109/gatekeeper-express exec npm version patch
+   # For a patch release (e.g. 0.3.0 -> 0.3.1):
+   pnpm -r --filter "@ahmed109/*" exec npm version patch
 
-   # Or bump minor (0.1.0 -> 0.2.0)
-   pnpm --filter @ahmed109/gatekeeper-core exec npm version minor
-   pnpm --filter @ahmed109/gatekeeper-react exec npm version minor
-   pnpm --filter @ahmed109/gatekeeper-express exec npm version minor
+   # Or for a minor release (e.g. 0.3.0 -> 0.4.0):
+   pnpm -r --filter "@ahmed109/*" exec npm version minor
    ```
 
-2. **Update dependency constraints** in `packages/react/package.json` and `packages/express/package.json` if core bumped to a new breaking or minor version:
-
-   ```json
-   "dependencies": {
-     "@ahmed109/gatekeeper-core": "workspace:^0.2.0"
-   }
-   ```
-
-3. **Re-run validation**:
+2. **Re-run validation**:
 
    ```bash
    pnpm lint && pnpm test && pnpm build
    ```
 
-4. **Publish in order**:
+3. **Publish updated packages**:
    ```bash
-   pnpm --filter @ahmed109/gatekeeper-core publish --access public
-   pnpm --filter @ahmed109/gatekeeper-react publish --access public
-   pnpm --filter @ahmed109/gatekeeper-express publish --access public
+   pnpm publish:packages
    ```

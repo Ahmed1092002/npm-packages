@@ -19,7 +19,12 @@ export function parseEvaluateOptions(options?: RoleMapOrOptions): EvaluateOption
   if (!options || typeof options !== 'object') {
     return {};
   }
-  if ('roleMap' in options || 'roleHierarchy' in options || 'context' in options || 'policy' in options) {
+  if (
+    'roleMap' in options ||
+    'roleHierarchy' in options ||
+    'context' in options ||
+    'policy' in options
+  ) {
     return options as EvaluateOptions;
   }
   const values = Object.values(options);
@@ -81,7 +86,9 @@ export function getUserEffectivePermissions(
 
 /** Supports exact permissions and namespace wildcards such as `billing.*`. */
 export function permissionMatches(granted: Permission, requested: Permission): boolean {
-  return granted === requested || (granted.endsWith('.*') && requested.startsWith(granted.slice(0, -1)));
+  return (
+    granted === requested || (granted.endsWith('.*') && requested.startsWith(granted.slice(0, -1)))
+  );
 }
 
 /**
@@ -177,7 +184,9 @@ export function evaluatePermission(
   }
 
   const effective = getUserEffectivePermissions(subject, options !== undefined ? opts : undefined);
-  const matchedPermission = [...effective].find((granted) => permissionMatches(granted, permission));
+  const matchedPermission = [...effective].find((granted) =>
+    permissionMatches(granted, permission),
+  );
   const allowed = matchedPermission !== undefined;
 
   if (allowed) {
@@ -185,7 +194,9 @@ export function evaluatePermission(
       allowed: true,
       reason: 'Permission granted.',
       matchedPermission,
-      source: subject.permissions?.includes(matchedPermission) ? 'direct-permission' : 'role-permission',
+      source: subject.permissions?.includes(matchedPermission)
+        ? 'direct-permission'
+        : 'role-permission',
       evaluatedRoles: resolveInheritedRoles(
         [...(subject.roles ?? []), ...(subject.role ? [subject.role] : [])],
         opts.roleHierarchy,

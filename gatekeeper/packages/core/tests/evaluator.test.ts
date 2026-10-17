@@ -281,7 +281,11 @@ describe('@ahmed109/gatekeeper-core - Evaluator & Roles', () => {
     });
 
     it('resolves inherited roles and handles cycles safely', () => {
-      const hierarchy = defineRoleHierarchy({ admin: ['manager'], manager: ['member'], member: ['admin'] });
+      const hierarchy = defineRoleHierarchy({
+        admin: ['manager'],
+        manager: ['member'],
+        member: ['admin'],
+      });
       const map = { admin: ['settings.manage'], manager: ['users.read'], member: ['reports.view'] };
       const user = { id: 'u', role: 'admin' };
       expect(can(user, 'reports.view', { roleMap: map, roleHierarchy: hierarchy })).toBe(true);
@@ -289,11 +293,10 @@ describe('@ahmed109/gatekeeper-core - Evaluator & Roles', () => {
     });
 
     it('explains the matching wildcard and evaluated inherited roles', () => {
-      const result = explain(
-        { id: 'u', role: 'admin' },
-        'billing.export',
-        { roleMap: { admin: ['billing.*'], member: [] }, roleHierarchy: { admin: ['member'] } },
-      );
+      const result = explain({ id: 'u', role: 'admin' }, 'billing.export', {
+        roleMap: { admin: ['billing.*'], member: [] },
+        roleHierarchy: { admin: ['member'] },
+      });
       expect(result.allowed).toBe(true);
       expect(result.matchedPermission).toBe('billing.*');
       expect(result.evaluatedRoles).toEqual(['admin', 'member']);

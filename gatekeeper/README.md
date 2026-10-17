@@ -40,8 +40,8 @@ graph TD
 
 ## 📦 Packages Overview
 
-| Package                                                | Status            | Description                                                                                 |
-| :----------------------------------------------------- | :---------------- | :------------------------------------------------------------------------------------------ |
+| Package                                              | Status            | Description                                                                                 |
+| :--------------------------------------------------- | :---------------- | :------------------------------------------------------------------------------------------ |
 | [`@ahmed109/gatekeeper-core`](./packages/core)       | Portfolio-Quality | Framework-independent types, role-to-permission mappings, and pure `can()` evaluators.      |
 | [`@ahmed109/gatekeeper-react`](./packages/react)     | Portfolio-Quality | React context provider, fail-safe loading state, `<Can>` / `<Feature>`, and reactive hooks. |
 | [`@ahmed109/gatekeeper-express`](./packages/express) | Portfolio-Quality | Express route guards with customizable `onUnauthorized` and `onForbidden` callbacks.        |

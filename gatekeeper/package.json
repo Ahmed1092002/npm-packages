@@ -10,7 +10,9 @@
     "test": "vitest run",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "format:fix": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
+    "format:fix": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "publish:dry-run": "pnpm --filter @ahmed109/gatekeeper-core exec npm pack --dry-run && pnpm --filter @ahmed109/gatekeeper-react exec npm pack --dry-run && pnpm --filter @ahmed109/gatekeeper-express exec npm pack --dry-run",
+    "publish:packages": "pnpm --filter @ahmed109/gatekeeper-core publish --access public --no-git-checks && pnpm --filter @ahmed109/gatekeeper-react publish --access public --no-git-checks && pnpm --filter @ahmed109/gatekeeper-express publish --access public --no-git-checks"
   },
   "devDependencies": {
     "@eslint/js": "^9.20.0",
