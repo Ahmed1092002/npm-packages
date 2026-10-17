@@ -1,4 +1,4 @@
-import { DEFAULT_ROLE_PERMISSIONS } from './roles.js';
+import { DEFAULT_ROLE_PERMISSIONS, resolveInheritedRoles } from './roles.js';
 import type {
   AuthorizationResult,
   AuthorizationSubject,
@@ -19,7 +19,7 @@ export function parseEvaluateOptions(options?: RoleMapOrOptions): EvaluateOption
   if (!options || typeof options !== 'object') {
     return {};
   }
-  if ('roleMap' in options || 'context' in options || 'policy' in options) {
+  if ('roleMap' in options || 'roleHierarchy' in options || 'context' in options || 'policy' in options) {
     return options as EvaluateOptions;
   }
   const values = Object.values(options);
@@ -59,8 +59,8 @@ export function getUserEffectivePermissions(
     rolesToEvaluate.add(subject.role);
   }
 
-  // 2. Combine permissions from every granted role
-  for (const role of rolesToEvaluate) {
+  // 2. Combine permissions from every granted and inherited role.
+  for (const role of resolveInheritedRoles(rolesToEvaluate, opts.roleHierarchy)) {
     const rolePerms = roleMap[role];
     if (rolePerms && Array.isArray(rolePerms)) {
       for (const perm of rolePerms) {
@@ -77,6 +77,11 @@ export function getUserEffectivePermissions(
   }
 
   return permissions;
+}
+
+/** Supports exact permissions and namespace wildcards such as `billing.*`. */
+export function permissionMatches(granted: Permission, requested: Permission): boolean {
+  return granted === requested || (granted.endsWith('.*') && requested.startsWith(granted.slice(0, -1)));
 }
 
 /**
@@ -109,7 +114,7 @@ export function can(
 
   // 2. Fall back to RBAC + direct permissions
   const effective = getUserEffectivePermissions(subject, options !== undefined ? opts : undefined);
-  return effective.has(permission);
+  return [...effective].some((granted) => permissionMatches(granted, permission));
 }
 
 /**
@@ -172,12 +177,19 @@ export function evaluatePermission(
   }
 
   const effective = getUserEffectivePermissions(subject, options !== undefined ? opts : undefined);
-  const allowed = effective.has(permission);
+  const matchedPermission = [...effective].find((granted) => permissionMatches(granted, permission));
+  const allowed = matchedPermission !== undefined;
 
   if (allowed) {
     return {
       allowed: true,
       reason: 'Permission granted.',
+      matchedPermission,
+      source: subject.permissions?.includes(matchedPermission) ? 'direct-permission' : 'role-permission',
+      evaluatedRoles: resolveInheritedRoles(
+        [...(subject.roles ?? []), ...(subject.role ? [subject.role] : [])],
+        opts.roleHierarchy,
+      ),
     };
   }
 
@@ -187,8 +199,16 @@ export function evaluatePermission(
     allowed: false,
     reason: `User with role '${roleDesc}' lacks required permission '${permission}'.`,
     missingPermissions: [permission],
+    source: 'none',
+    evaluatedRoles: resolveInheritedRoles(
+      [...(subject.roles ?? []), ...(subject.role ? [subject.role] : [])],
+      opts.roleHierarchy,
+    ),
   };
 }
+
+/** Alias for evaluatePermission, optimized for audit/debug UI naming. */
+export const explain = evaluatePermission;
 
 /**
  * Normalizes feature flag inputs (either an array of FeatureFlag or a record of boolean flags)

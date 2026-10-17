@@ -1,4 +1,4 @@
-import type { RolePermissionsMap } from './types.js';
+import type { Role, RoleHierarchy, RolePermissionsMap } from './types.js';
 
 /**
  * Default role-to-permissions map for Gatekeeper.
@@ -31,4 +31,23 @@ export function defineRolePermissions(
     }
   }
   return merged;
+}
+
+/** Creates a defensive copy of role inheritance declarations. */
+export function defineRoleHierarchy(hierarchy: RoleHierarchy): RoleHierarchy {
+  return Object.fromEntries(
+    Object.entries(hierarchy).map(([role, parents]) => [role, [...parents]]),
+  ) as RoleHierarchy;
+}
+
+/** Resolves all inherited roles safely, including cyclic declarations. */
+export function resolveInheritedRoles(roles: Iterable<Role>, hierarchy?: RoleHierarchy): Role[] {
+  const resolved = new Set<Role>();
+  const visit = (role: Role): void => {
+    if (resolved.has(role)) return;
+    resolved.add(role);
+    for (const parent of hierarchy?.[role] ?? []) visit(parent);
+  };
+  for (const role of roles) visit(role);
+  return [...resolved];
 }

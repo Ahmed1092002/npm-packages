@@ -4,6 +4,8 @@ import {
   canAll,
   canAny,
   defineRolePermissions,
+  defineRoleHierarchy,
+  explain,
   evaluatePermission,
   getUserEffectivePermissions,
   isFeatureEnabled,
@@ -267,6 +269,35 @@ describe('@ahmed109/gatekeeper-core - Evaluator & Roles', () => {
 
     it('handles undefined or null flags safely', () => {
       expect(isFeatureEnabled(undefined, 'any')).toBe(false);
+    });
+  });
+
+  describe('Permission patterns, inheritance, and explanations (v0.3)', () => {
+    it('matches namespace wildcards without granting unrelated namespaces', () => {
+      const user = { id: 'billing-user', permissions: ['billing.*'] };
+      expect(can(user, 'billing.export')).toBe(true);
+      expect(can(user, 'billing.refund')).toBe(true);
+      expect(can(user, 'users.delete')).toBe(false);
+    });
+
+    it('resolves inherited roles and handles cycles safely', () => {
+      const hierarchy = defineRoleHierarchy({ admin: ['manager'], manager: ['member'], member: ['admin'] });
+      const map = { admin: ['settings.manage'], manager: ['users.read'], member: ['reports.view'] };
+      const user = { id: 'u', role: 'admin' };
+      expect(can(user, 'reports.view', { roleMap: map, roleHierarchy: hierarchy })).toBe(true);
+      expect(can(user, 'users.read', { roleMap: map, roleHierarchy: hierarchy })).toBe(true);
+    });
+
+    it('explains the matching wildcard and evaluated inherited roles', () => {
+      const result = explain(
+        { id: 'u', role: 'admin' },
+        'billing.export',
+        { roleMap: { admin: ['billing.*'], member: [] }, roleHierarchy: { admin: ['member'] } },
+      );
+      expect(result.allowed).toBe(true);
+      expect(result.matchedPermission).toBe('billing.*');
+      expect(result.evaluatedRoles).toEqual(['admin', 'member']);
+      expect(result.source).toBe('role-permission');
     });
   });
 

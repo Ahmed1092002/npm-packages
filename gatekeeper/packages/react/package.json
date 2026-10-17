@@ -1,6 +1,6 @@
 {
   "name": "@ahmed109/gatekeeper-react",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "React authorization and feature-flag toolkit with fail-safe loading state powered by Gatekeeper Core",
   "keywords": [
     "react",
@@ -53,7 +53,7 @@
     "react-dom": ">=18.0.0"
   },
   "dependencies": {
-    "@ahmed109/gatekeeper-core": "workspace:^0.2.0"
+    "@ahmed109/gatekeeper-core": "workspace:^0.3.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",

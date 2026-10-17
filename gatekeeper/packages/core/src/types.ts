@@ -57,6 +57,8 @@ export type AuthorizationPolicy = (
  */
 export interface EvaluateOptions {
   roleMap?: RolePermissionsMap;
+  /** A role can inherit permissions from one or more parent roles. */
+  roleHierarchy?: RoleHierarchy;
   context?: Record<string, unknown>;
   policy?: AuthorizationPolicy;
 }
@@ -80,9 +82,17 @@ export interface AuthorizationResult {
   allowed: boolean;
   reason?: string;
   missingPermissions?: Permission[];
+  /** Roles considered after resolving inheritance. */
+  evaluatedRoles?: Role[];
+  /** How the decision was reached. */
+  source?: 'policy' | 'direct-permission' | 'role-permission' | 'none';
+  matchedPermission?: Permission;
 }
 
 /**
  * Mapping from roles to their granted permissions.
  */
 export type RolePermissionsMap = Record<Role, readonly Permission[] | Permission[]>;
+
+/** Maps a role to the roles whose permissions it inherits. */
+export type RoleHierarchy = Record<Role, readonly Role[] | Role[]>;
