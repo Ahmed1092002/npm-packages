@@ -5,7 +5,7 @@ import {
   isFeatureEnabled,
   type EvaluateOptions,
   type Permission,
-} from '@ahmedtamer/gatekeeper-core';
+} from '@ahmed109/gatekeeper-core';
 import type {
   FeatureFlagMiddlewareOptions,
   GatekeeperMiddlewareOptions,

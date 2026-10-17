@@ -5,7 +5,7 @@ import type {
   EvaluateOptions,
   Permission,
   RolePermissionsMap,
-} from '@ahmedtamer/gatekeeper-core';
+} from '@ahmed109/gatekeeper-core';
 
 export type UnauthorizedHandler = (res: Response, req: Request) => void | Promise<void>;
 export type ForbiddenHandler = (

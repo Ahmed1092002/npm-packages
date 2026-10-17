@@ -1,5 +1,5 @@
 {
-  "name": "@ahmedtamer/gatekeeper-react",
+  "name": "@ahmed109/gatekeeper-react",
   "version": "0.2.0",
   "description": "React authorization and feature-flag toolkit with fail-safe loading state powered by Gatekeeper Core",
   "keywords": [
@@ -42,8 +42,8 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts --clean --external react,react-dom,@ahmedtamer/gatekeeper-core",
-    "dev": "tsup src/index.ts --format esm,cjs --dts --watch --external react,react-dom,@ahmedtamer/gatekeeper-core",
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean --external react,react-dom,@ahmed109/gatekeeper-core",
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch --external react,react-dom,@ahmed109/gatekeeper-core",
     "prepack": "pnpm run build",
     "test": "vitest run",
     "lint": "eslint src"
@@ -53,7 +53,7 @@
     "react-dom": ">=18.0.0"
   },
   "dependencies": {
-    "@ahmedtamer/gatekeeper-core": "workspace:^0.2.0"
+    "@ahmed109/gatekeeper-core": "workspace:^0.2.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",

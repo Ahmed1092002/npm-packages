@@ -1,15 +1,15 @@
-# @ahmedtamer/gatekeeper-express
+# @ahmed109/gatekeeper-express
 
 > Express middleware for authorization and feature flags with customizable callbacks.
 
-Part of the **Gatekeeper** toolkit. Built on top of [`@ahmedtamer/gatekeeper-core`](https://www.npmjs.com/package/@ahmedtamer/gatekeeper-core).
+Part of the **Gatekeeper** toolkit. Built on top of [`@ahmed109/gatekeeper-core`](https://www.npmjs.com/package/@ahmed109/gatekeeper-core).
 
 ## Installation
 
 ```bash
-npm install @ahmedtamer/gatekeeper-express @ahmedtamer/gatekeeper-core
+npm install @ahmed109/gatekeeper-express @ahmed109/gatekeeper-core
 # or
-pnpm add @ahmedtamer/gatekeeper-express @ahmedtamer/gatekeeper-core
+pnpm add @ahmed109/gatekeeper-express @ahmed109/gatekeeper-core
 ```
 
 ### Peer Dependencies
@@ -31,7 +31,7 @@ import {
   gatekeeperMiddleware,
   requirePermission,
   requireFeatureFlag,
-} from '@ahmedtamer/gatekeeper-express';
+} from '@ahmed109/gatekeeper-express';
 
 const app = express();
 app.use(express.json());

@@ -1,5 +1,5 @@
-﻿import { ToggleLeft, ToggleRight, Flag, Sparkles } from 'lucide-react';
-import { Feature } from '@ahmedtamer/gatekeeper-react';
+import { ToggleLeft, ToggleRight, Flag, Sparkles } from 'lucide-react';
+import { Feature } from '@ahmed109/gatekeeper-react';
 
 interface FeatureFlagSectionProps {
   flags: Record<string, boolean>;

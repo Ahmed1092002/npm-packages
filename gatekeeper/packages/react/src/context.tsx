@@ -9,7 +9,7 @@ import {
   normalizeFeatureFlags,
   type EvaluateOptions,
   type Permission,
-} from '@ahmedtamer/gatekeeper-core';
+} from '@ahmed109/gatekeeper-core';
 import type { GatekeeperContextValue, GatekeeperProviderProps } from './types.js';
 
 export const GatekeeperContext = createContext<GatekeeperContextValue | null>(null);

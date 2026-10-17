@@ -13,7 +13,7 @@ import {
   type GatekeeperUser,
 } from '../src/index.js';
 
-describe('@ahmedtamer/gatekeeper-core - Evaluator & Roles', () => {
+describe('@ahmed109/gatekeeper-core - Evaluator & Roles', () => {
   const adminUser: GatekeeperUser = {
     id: 'user-admin',
     name: 'Admin User',

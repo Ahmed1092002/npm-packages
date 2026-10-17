@@ -9,9 +9,9 @@ import {
   useGatekeeper,
   usePermission,
 } from '../src/index.js';
-import type { AuthorizationPolicy, GatekeeperUser } from '@ahmedtamer/gatekeeper-core';
+import type { AuthorizationPolicy, GatekeeperUser } from '@ahmed109/gatekeeper-core';
 
-describe('@ahmedtamer/gatekeeper-react', () => {
+describe('@ahmed109/gatekeeper-react', () => {
   const adminUser: GatekeeperUser = {
     id: 'user-admin',
     name: 'Admin User',

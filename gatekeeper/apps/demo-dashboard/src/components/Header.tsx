@@ -1,5 +1,5 @@
-﻿import { Shield, ShieldAlert, LogOut, CheckCircle2 } from 'lucide-react';
-import type { GatekeeperUser } from '@ahmedtamer/gatekeeper-core';
+import { Shield, ShieldAlert, LogOut, CheckCircle2 } from 'lucide-react';
+import type { GatekeeperUser } from '@ahmed109/gatekeeper-core';
 
 interface HeaderProps {
   currentUser: GatekeeperUser | null;

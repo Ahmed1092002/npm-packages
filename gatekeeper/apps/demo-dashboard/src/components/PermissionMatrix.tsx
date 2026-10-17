@@ -1,6 +1,6 @@
-﻿import { Check, X, KeyRound, Sparkles } from 'lucide-react';
-import { useGatekeeper } from '@ahmedtamer/gatekeeper-react';
-import { DEFAULT_ROLE_PERMISSIONS, type Permission } from '@ahmedtamer/gatekeeper-core';
+import { Check, X, KeyRound, Sparkles } from 'lucide-react';
+import { useGatekeeper } from '@ahmed109/gatekeeper-react';
+import { DEFAULT_ROLE_PERMISSIONS, type Permission } from '@ahmed109/gatekeeper-core';
 
 interface PermissionMeta {
   key: Permission;

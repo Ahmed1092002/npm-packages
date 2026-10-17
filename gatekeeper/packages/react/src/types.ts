@@ -5,7 +5,7 @@ import type {
   FeatureFlag,
   Permission,
   RolePermissionsMap,
-} from '@ahmedtamer/gatekeeper-core';
+} from '@ahmed109/gatekeeper-core';
 import type { ReactNode } from 'react';
 
 export interface GatekeeperContextValue {

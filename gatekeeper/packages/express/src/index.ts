@@ -1,4 +1,4 @@
-﻿export * from './types.js';
+export * from './types.js';
 export * from './middleware.js';
 
 // Re-export core types for Express consumer convenience
@@ -9,4 +9,4 @@ export type {
   FeatureFlag,
   RolePermissionsMap,
   AuthorizationResult,
-} from '@ahmedtamer/gatekeeper-core';
+} from '@ahmed109/gatekeeper-core';

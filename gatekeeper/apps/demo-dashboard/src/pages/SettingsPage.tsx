@@ -1,6 +1,6 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Settings, Shield, Lock, Save, CheckCircle2 } from 'lucide-react';
-import { Can } from '@ahmedtamer/gatekeeper-react';
+import { Can } from '@ahmed109/gatekeeper-react';
 
 export const SettingsPage: React.FC = () => {
   const [orgName, setOrgName] = useState('Acme Cybernetics Corp');

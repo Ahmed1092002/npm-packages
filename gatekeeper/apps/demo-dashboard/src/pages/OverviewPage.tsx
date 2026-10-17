@@ -1,5 +1,5 @@
-﻿import { Shield, KeyRound, Flag, Lock, Zap } from 'lucide-react';
-import { useGatekeeper, usePermission, Feature } from '@ahmedtamer/gatekeeper-react';
+import { Shield, KeyRound, Flag, Lock, Zap } from 'lucide-react';
+import { useGatekeeper, usePermission, Feature } from '@ahmed109/gatekeeper-react';
 import { PermissionMatrix } from '../components/PermissionMatrix.js';
 import { FeatureFlagSection } from '../components/FeatureFlagSection.js';
 import { ApiRequestPanel } from '../components/ApiRequestPanel.js';

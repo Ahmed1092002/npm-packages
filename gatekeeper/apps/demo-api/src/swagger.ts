@@ -1,10 +1,10 @@
-﻿export const swaggerDocument = {
+export const swaggerDocument = {
   openapi: '3.0.3',
   info: {
     title: 'Gatekeeper Demo API',
     version: '1.0.0',
     description:
-      'Reference implementation of an Express backend guarded by @ahmedtamer/gatekeeper-express middleware and @ahmedtamer/gatekeeper-core RBAC. Note: This OpenAPI specification is currently manually maintained for demonstration and exploratory purposes, rather than auto-generated from route declarations.',
+      'Reference implementation of an Express backend guarded by @ahmed109/gatekeeper-express middleware and @ahmed109/gatekeeper-core RBAC. Note: This OpenAPI specification is currently manually maintained for demonstration and exploratory purposes, rather than auto-generated from route declarations.',
   },
   servers: [
     {

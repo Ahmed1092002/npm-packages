@@ -1,6 +1,6 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Send, Terminal, Clock, CheckCircle2, AlertCircle, XCircle } from 'lucide-react';
-import type { GatekeeperUser } from '@ahmedtamer/gatekeeper-core';
+import type { GatekeeperUser } from '@ahmed109/gatekeeper-core';
 import type { ApiCallResult } from '../types.js';
 
 interface ApiRequestPanelProps {

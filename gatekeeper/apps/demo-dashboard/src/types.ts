@@ -1,4 +1,4 @@
-﻿import type { GatekeeperUser } from '@ahmedtamer/gatekeeper-core';
+import type { GatekeeperUser } from '@ahmed109/gatekeeper-core';
 
 export interface UserPreset {
   id: string;

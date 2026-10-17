@@ -1,14 +1,14 @@
 # Publishing Gatekeeper Packages to npm
 
-This guide describes how to publish the three Gatekeeper library packages under the `@ahmedtamer` npm scope.
+This guide describes how to publish the three Gatekeeper library packages under the `@ahmed109` npm scope.
 
 ## Published Packages
 
 | Package Directory  | npm Package Name                 | Version | Access |
 | :----------------- | :------------------------------- | :------ | :----- |
-| `packages/core`    | `@ahmedtamer/gatekeeper-core`    | `0.2.0` | Public |
-| `packages/react`   | `@ahmedtamer/gatekeeper-react`   | `0.2.0` | Public |
-| `packages/express` | `@ahmedtamer/gatekeeper-express` | `0.2.0` | Public |
+| `packages/core`    | `@ahmed109/gatekeeper-core`    | `0.2.0` | Public |
+| `packages/react`   | `@ahmed109/gatekeeper-react`   | `0.2.0` | Public |
+| `packages/express` | `@ahmed109/gatekeeper-express` | `0.2.0` | Public |
 
 > [!NOTE]
 > The demo applications (`apps/demo-api` and `apps/demo-dashboard`) and the root monorepo are marked `"private": true` and are **never** published to npm.
@@ -17,7 +17,7 @@ This guide describes how to publish the three Gatekeeper library packages under 
 
 ## 1. Prerequisites & npm Authentication
 
-1. Ensure you have an active npm account with permission to publish under `@ahmedtamer` (either as your personal account username or an npm organization).
+1. Ensure you have an active npm account with permission to publish under `@ahmed109` (either as your personal account username or an npm organization).
 2. Log in via your terminal:
    ```bash
    npm login
@@ -35,9 +35,9 @@ This guide describes how to publish the three Gatekeeper library packages under 
 Verify that the target scoped package names are available:
 
 ```bash
-npm view @ahmedtamer/gatekeeper-core version
-npm view @ahmedtamer/gatekeeper-react version
-npm view @ahmedtamer/gatekeeper-express version
+npm view @ahmed109/gatekeeper-core version
+npm view @ahmed109/gatekeeper-react version
+npm view @ahmed109/gatekeeper-express version
 ```
 
 - If an `E404 Not Found` error is returned, the package name is available and ready for first publish.
@@ -71,13 +71,13 @@ Before publishing live, inspect the generated package tarballs using dry-run to 
 
 ```bash
 # Inspect core tarball
-pnpm --filter @ahmedtamer/gatekeeper-core pack --dry-run
+pnpm --filter @ahmed109/gatekeeper-core pack --dry-run
 
 # Inspect react tarball
-pnpm --filter @ahmedtamer/gatekeeper-react pack --dry-run
+pnpm --filter @ahmed109/gatekeeper-react pack --dry-run
 
 # Inspect express tarball
-pnpm --filter @ahmedtamer/gatekeeper-express pack --dry-run
+pnpm --filter @ahmed109/gatekeeper-express pack --dry-run
 ```
 
 Verify that source files (`src/`), tests (`tests/`), and internal configs are **excluded** from the package contents.
@@ -86,12 +86,12 @@ Verify that source files (`src/`), tests (`tests/`), and internal configs are **
 
 ## 5. Strict Publish Order
 
-Because `@ahmedtamer/gatekeeper-react` and `@ahmedtamer/gatekeeper-express` depend on `@ahmedtamer/gatekeeper-core`, you **MUST** publish in this exact order:
+Because `@ahmed109/gatekeeper-react` and `@ahmed109/gatekeeper-express` depend on `@ahmed109/gatekeeper-core`, you **MUST** publish in this exact order:
 
 ```mermaid
 graph LR
-    Step1["1. @ahmedtamer/gatekeeper-core"] --> Step2["2. @ahmedtamer/gatekeeper-react"]
-    Step1 --> Step3["3. @ahmedtamer/gatekeeper-express"]
+    Step1["1. @ahmed109/gatekeeper-core"] --> Step2["2. @ahmed109/gatekeeper-react"]
+    Step1 --> Step3["3. @ahmed109/gatekeeper-express"]
 ```
 
 ### Exact Publish Commands
@@ -100,13 +100,13 @@ Run each publish command from the monorepo root:
 
 ```bash
 # Step 1: Publish Core
-pnpm --filter @ahmedtamer/gatekeeper-core publish --access public --no-git-checks
+pnpm --filter @ahmed109/gatekeeper-core publish --access public --no-git-checks
 
 # Step 2: Publish React
-pnpm --filter @ahmedtamer/gatekeeper-react publish --access public --no-git-checks
+pnpm --filter @ahmed109/gatekeeper-react publish --access public --no-git-checks
 
 # Step 3: Publish Express
-pnpm --filter @ahmedtamer/gatekeeper-express publish --access public --no-git-checks
+pnpm --filter @ahmed109/gatekeeper-express publish --access public --no-git-checks
 ```
 
 > [!TIP]
@@ -122,21 +122,21 @@ When releasing bug fixes or new features:
 
    ```bash
    # Bump patch (0.1.0 -> 0.1.1)
-   pnpm --filter @ahmedtamer/gatekeeper-core exec npm version patch
-   pnpm --filter @ahmedtamer/gatekeeper-react exec npm version patch
-   pnpm --filter @ahmedtamer/gatekeeper-express exec npm version patch
+   pnpm --filter @ahmed109/gatekeeper-core exec npm version patch
+   pnpm --filter @ahmed109/gatekeeper-react exec npm version patch
+   pnpm --filter @ahmed109/gatekeeper-express exec npm version patch
 
    # Or bump minor (0.1.0 -> 0.2.0)
-   pnpm --filter @ahmedtamer/gatekeeper-core exec npm version minor
-   pnpm --filter @ahmedtamer/gatekeeper-react exec npm version minor
-   pnpm --filter @ahmedtamer/gatekeeper-express exec npm version minor
+   pnpm --filter @ahmed109/gatekeeper-core exec npm version minor
+   pnpm --filter @ahmed109/gatekeeper-react exec npm version minor
+   pnpm --filter @ahmed109/gatekeeper-express exec npm version minor
    ```
 
 2. **Update dependency constraints** in `packages/react/package.json` and `packages/express/package.json` if core bumped to a new breaking or minor version:
 
    ```json
    "dependencies": {
-     "@ahmedtamer/gatekeeper-core": "workspace:^0.2.0"
+     "@ahmed109/gatekeeper-core": "workspace:^0.2.0"
    }
    ```
 
@@ -148,7 +148,7 @@ When releasing bug fixes or new features:
 
 4. **Publish in order**:
    ```bash
-   pnpm --filter @ahmedtamer/gatekeeper-core publish --access public
-   pnpm --filter @ahmedtamer/gatekeeper-react publish --access public
-   pnpm --filter @ahmedtamer/gatekeeper-express publish --access public
+   pnpm --filter @ahmed109/gatekeeper-core publish --access public
+   pnpm --filter @ahmed109/gatekeeper-react publish --access public
+   pnpm --filter @ahmed109/gatekeeper-express publish --access public
    ```

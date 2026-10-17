@@ -11,8 +11,8 @@
     "lint": "eslint src"
   },
   "dependencies": {
-    "@ahmedtamer/gatekeeper-core": "workspace:*",
-    "@ahmedtamer/gatekeeper-express": "workspace:*",
+    "@ahmed109/gatekeeper-core": "workspace:*",
+    "@ahmed109/gatekeeper-express": "workspace:*",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "swagger-ui-express": "^5.0.1"

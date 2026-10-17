@@ -1,6 +1,6 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { FileText, Download, ShieldAlert, CheckCircle2 } from 'lucide-react';
-import { Can, Feature } from '@ahmedtamer/gatekeeper-react';
+import { Can, Feature } from '@ahmed109/gatekeeper-react';
 
 export const ReportsPage: React.FC = () => {
   const [downloadSuccess, setDownloadSuccess] = useState(false);

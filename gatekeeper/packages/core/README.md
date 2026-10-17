@@ -1,4 +1,4 @@
-# @ahmedtamer/gatekeeper-core
+# @ahmed109/gatekeeper-core
 
 > Pure, framework-independent authorization and feature-flag evaluator for TypeScript.
 
@@ -7,15 +7,15 @@ Part of the **Gatekeeper** toolkit. Zero runtime dependencies, deterministic eva
 ## Installation
 
 `ash
-npm install @ahmedtamer/gatekeeper-core
+npm install @ahmed109/gatekeeper-core
 
 # or
 
-pnpm add @ahmedtamer/gatekeeper-core
+pnpm add @ahmed109/gatekeeper-core
 
 # or
 
-yarn add @ahmedtamer/gatekeeper-core
+yarn add @ahmed109/gatekeeper-core
 `
 
 ## Features
@@ -28,7 +28,7 @@ yarn add @ahmedtamer/gatekeeper-core
 ## Quickstart
 
 ` ypescript
-import { can, canAll, isFeatureEnabled, type GatekeeperUser } from '@ahmedtamer/gatekeeper-core';
+import { can, canAll, isFeatureEnabled, type GatekeeperUser } from '@ahmed109/gatekeeper-core';
 
 const user: GatekeeperUser = {
 id: 'usr_123',

@@ -1,15 +1,15 @@
-# @ahmedtamer/gatekeeper-react
+# @ahmed109/gatekeeper-react
 
 > Declarative React authorization and feature-flag toolkit with fail-safe loading state.
 
-Part of the **Gatekeeper** toolkit. Built on top of [`@ahmedtamer/gatekeeper-core`](https://www.npmjs.com/package/@ahmedtamer/gatekeeper-core).
+Part of the **Gatekeeper** toolkit. Built on top of [`@ahmed109/gatekeeper-core`](https://www.npmjs.com/package/@ahmed109/gatekeeper-core).
 
 ## Installation
 
 ```bash
-npm install @ahmedtamer/gatekeeper-react @ahmedtamer/gatekeeper-core
+npm install @ahmed109/gatekeeper-react @ahmed109/gatekeeper-core
 # or
-pnpm add @ahmedtamer/gatekeeper-react @ahmedtamer/gatekeeper-core
+pnpm add @ahmed109/gatekeeper-react @ahmed109/gatekeeper-core
 ```
 
 ### Peer Dependencies
@@ -28,8 +28,8 @@ pnpm add @ahmedtamer/gatekeeper-react @ahmedtamer/gatekeeper-core
 
 ```tsx
 import React from 'react';
-import { GatekeeperProvider, Can, Feature, usePermission } from '@ahmedtamer/gatekeeper-react';
-import type { GatekeeperUser } from '@ahmedtamer/gatekeeper-core';
+import { GatekeeperProvider, Can, Feature, usePermission } from '@ahmed109/gatekeeper-react';
+import type { GatekeeperUser } from '@ahmed109/gatekeeper-core';
 
 const currentUser: GatekeeperUser = {
   id: 'usr_123',

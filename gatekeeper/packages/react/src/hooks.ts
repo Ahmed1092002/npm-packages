@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import type { EvaluateOptions, Permission } from '@ahmedtamer/gatekeeper-core';
+import type { EvaluateOptions, Permission } from '@ahmed109/gatekeeper-core';
 import { GatekeeperContext } from './context.js';
 import type { GatekeeperContextValue } from './types.js';
 
