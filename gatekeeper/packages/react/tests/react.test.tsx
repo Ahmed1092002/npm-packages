@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import {
@@ -9,7 +9,7 @@ import {
   useGatekeeper,
   usePermission,
 } from '../src/index.js';
-import type { GatekeeperUser } from '@ahmedtamer/gatekeeper-core';
+import type { AuthorizationPolicy, GatekeeperUser } from '@ahmedtamer/gatekeeper-core';
 
 describe('@ahmedtamer/gatekeeper-react', () => {
   const adminUser: GatekeeperUser = {
@@ -215,6 +215,70 @@ describe('@ahmedtamer/gatekeeper-react', () => {
       expect(screen.getByTestId('load-can-delete')).toHaveTextContent('false');
       expect(screen.getByTestId('load-flag')).toHaveTextContent('false');
       expect(screen.getByTestId('load-perms-count')).toHaveTextContent('0');
+    });
+  });
+
+  describe('Multiple roles and policy in React (v0.2)', () => {
+    it('evaluates permissions when subject has multiple roles', () => {
+      const customRoleMap = {
+        'billing-manager': ['billing.export'],
+        'support-agent': ['tickets.reply'],
+      };
+
+      const multiRoleSubject = {
+        id: 'u-multi',
+        roles: ['billing-manager', 'support-agent'],
+      };
+
+      render(
+        <GatekeeperProvider subject={multiRoleSubject} roleMap={customRoleMap}>
+          <Can permission="billing.export" fallback={<div>Billing Denied</div>}>
+            <div>Billing Export Allowed</div>
+          </Can>
+          <Can permission="tickets.reply" fallback={<div>Tickets Denied</div>}>
+            <div>Tickets Reply Allowed</div>
+          </Can>
+          <Can permission="settings.manage" fallback={<div>Settings Denied</div>}>
+            <div>Settings Allowed</div>
+          </Can>
+        </GatekeeperProvider>,
+      );
+
+      expect(screen.getByText('Billing Export Allowed')).toBeInTheDocument();
+      expect(screen.getByText('Tickets Reply Allowed')).toBeInTheDocument();
+      expect(screen.getByText('Settings Denied')).toBeInTheDocument();
+    });
+
+    it('supports scoped policy and context in Can component', () => {
+      const user = { id: 'usr_owner', role: 'member' };
+      const editPolicy: AuthorizationPolicy = (subject, perm, ctx) => {
+        if (perm === 'doc.edit') return ctx?.ownerId === subject.id;
+        return undefined;
+      };
+
+      render(
+        <GatekeeperProvider user={user}>
+          <Can
+            permission="doc.edit"
+            policy={editPolicy}
+            context={{ ownerId: 'usr_owner' }}
+            fallback={<div>Edit Forbidden</div>}
+          >
+            <div>Edit Allowed For Owner</div>
+          </Can>
+          <Can
+            permission="doc.edit"
+            policy={editPolicy}
+            context={{ ownerId: 'someone_else' }}
+            fallback={<div>Edit Denied For Non-Owner</div>}
+          >
+            <div>Should Not Render</div>
+          </Can>
+        </GatekeeperProvider>,
+      );
+
+      expect(screen.getByText('Edit Allowed For Owner')).toBeInTheDocument();
+      expect(screen.getByText('Edit Denied For Non-Owner')).toBeInTheDocument();
     });
   });
 });

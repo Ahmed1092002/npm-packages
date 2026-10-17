@@ -1,4 +1,4 @@
-﻿# Gatekeeper Architecture & Technical Design
+# Gatekeeper Architecture & Technical Design
 
 ## 1. Overview & Philosophy
 
@@ -31,25 +31,57 @@ graph TD
 
 ## 2. Core Concepts
 
-### Pure Authorization Function (`can`)
+### Standard Authorization Subject (`AuthorizationSubject`)
 
-The evaluator function in `@ahmedtamer/gatekeeper-core` is a deterministic, side-effect free function:
+Gatekeeper normalizes identity data into a standard authorization subject rather than enforcing a specific database schema:
+
+```typescript
+type AuthorizationSubject = {
+  id: string;
+  role?: Role; // Legacy single-role support
+  roles?: Role[]; // Preferred multiple-role support
+  permissions?: Permission[]; // Direct explicit grants
+  attributes?: Record<string, unknown>; // Contextual metadata (tenantId, plan, teamId)
+};
+
+// GatekeeperUser is maintained as a backward-compatible alias
+type GatekeeperUser = AuthorizationSubject;
+```
+
+### Identity Normalization Adapters (`adapters.ts`)
+
+Zero-dependency normalization helpers translate heterogeneous authentication models into a standard subject:
+
+1. `fromRoles(id, roles, attributes?)`: Normalizes single or multiple roles.
+2. `fromPermissions(id, permissions, attributes?)`: Normalizes direct permissions.
+3. `fromJwtClaims(claims, options?)`: Extracts subject ID, permissions, and roles (with auto-resolution of standard claims and Keycloak `realm_access.roles`).
+4. `createSubject(source, mapping)`: Maps arbitrary domain models, database records, or nested membership entities.
+
+### Pure Evaluator (`can`, `canAll`, `canAny`)
+
+The evaluator function in `@ahmedtamer/gatekeeper-core` is deterministic and side-effect free:
 
 ```typescript
 function can(
-  user: GatekeeperUser | null | undefined,
+  subject: AuthorizationSubject | null | undefined,
   permission: Permission,
-  roleMap?: RolePermissionsMap,
+  options?: RolePermissionsMap | EvaluateOptions,
 ): boolean;
 ```
 
-1. **Null-Safety**: When `user` is `null` or `undefined`, `can` returns `false` without throwing runtime exceptions.
-2. **Layered Privilege Model**:
-   - **Role-Based Access Control (RBAC)**: Roles map to granted permission arrays (e.g. `admin`, `manager`, `member`).
-   - **Direct Grants (ABAC / Explicit Assignment)**: Individual users can be granted specific direct permissions (`user.permissions`) that supersede or expand role boundaries without requiring custom role creation.
-3. **Compound Queries**:
-   - `canAll(user, permissions)`: User must possess every permission in the list.
-   - `canAny(user, permissions)`: User must possess at least one of the listed permissions.
+1. **Multiple-Role Support**: Combines permissions granted across all roles in `subject.roles` as well as legacy `subject.role`.
+2. **Direct Grants Merging**: Merges direct grants (`subject.permissions`) with role permissions and deduplicates via `Set`.
+3. **Safe Denial**: If neither roles nor permissions are granted, `can` evaluates to `false` safely.
+4. **Scoped Policies**: An optional `AuthorizationPolicy` callback enables contextual and ownership checks:
+   ```typescript
+   type AuthorizationPolicy = (
+     subject: AuthorizationSubject,
+     permission: Permission,
+     context?: Record<string, unknown>,
+   ) => boolean | undefined;
+   ```
+   - Returning `true` or `false` makes an immediate decision.
+   - Returning `undefined` falls back to standard RBAC/direct-permission evaluation.
 
 ---
 
@@ -89,6 +121,10 @@ function can(
 ---
 
 ## 4. Security & Safety Design
+
+### Frontend UX vs. Mandatory Backend Enforcement
+
+Frontend permission guards (`<Can>`, `usePermission`) exist strictly to improve user experience by hiding irrelevant actions and preventing unauthorized clicks. They do NOT provide a security boundary. Because client-side JavaScript execution can be inspected or modified by the user, **backend authorization with `@ahmedtamer/gatekeeper-express` remains strictly mandatory** on all API routes.
 
 ### Fail-Safe React Loading State
 

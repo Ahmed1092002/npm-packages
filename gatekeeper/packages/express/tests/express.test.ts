@@ -1,7 +1,7 @@
-﻿import express, { type Request, type Response } from 'express';
+import express, { type Request, type Response } from 'express';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import type { GatekeeperUser } from '@ahmedtamer/gatekeeper-core';
+import type { AuthorizationPolicy, GatekeeperUser } from '@ahmedtamer/gatekeeper-core';
 import {
   gatekeeperMiddleware,
   requireAnyPermission,
@@ -383,6 +383,96 @@ describe('@ahmedtamer/gatekeeper-express Middleware', () => {
       const flagRes = await request(app).get('/via-global-flag');
       expect(flagRes.status).toBe(200);
       expect(flagRes.body.betaEnabled).toBe(true);
+    });
+  });
+
+  describe('Multiple-role subjects and policy support (v0.2)', () => {
+    it('grants access when subject satisfies permission via one of multiple roles', async () => {
+      const app = express();
+      const customRoleMap = {
+        'billing-manager': ['billing.export'],
+        'support-agent': ['tickets.reply'],
+      };
+
+      const multiRoleSubject = {
+        id: 'u-finance',
+        roles: ['billing-manager', 'support-agent'],
+      };
+
+      app.use((req, _res, next) => {
+        req.subject = multiRoleSubject;
+        next();
+      });
+
+      app.use(gatekeeperMiddleware({ roleMap: customRoleMap }));
+
+      app.get(
+        '/billing/export',
+        requirePermission('billing.export', { roleMap: customRoleMap }),
+        (_req, res) => {
+          res.json({ exported: true });
+        },
+      );
+
+      app.get(
+        '/tickets/reply',
+        requirePermission('tickets.reply', { roleMap: customRoleMap }),
+        (_req, res) => {
+          res.json({ replied: true });
+        },
+      );
+
+      app.get(
+        '/admin/settings',
+        requirePermission('settings.manage', { roleMap: customRoleMap }),
+        (_req, res) => {
+          res.json({ managed: true });
+        },
+      );
+
+      const billRes = await request(app).get('/billing/export');
+      expect(billRes.status).toBe(200);
+
+      const ticketRes = await request(app).get('/tickets/reply');
+      expect(ticketRes.status).toBe(200);
+
+      const adminRes = await request(app).get('/admin/settings');
+      expect(adminRes.status).toBe(403);
+    });
+
+    it('supports route-level policy with dynamic context', async () => {
+      const app = express();
+      app.use((req, _res, next) => {
+        req.user = { id: 'usr_doc_owner', role: 'member' };
+        next();
+      });
+
+      const ownershipPolicy: AuthorizationPolicy = (subject, perm, ctx) => {
+        if (perm === 'documents.update') {
+          return ctx?.ownerId === subject.id;
+        }
+        return undefined;
+      };
+
+      app.get(
+        '/documents/:id',
+        requirePermission('documents.update', {
+          policy: ownershipPolicy,
+          getContext: (req) => ({
+            ownerId: req.params.id === 'doc-owned' ? 'usr_doc_owner' : 'someone_else',
+          }),
+        }),
+        (_req, res) => {
+          res.json({ updated: true });
+        },
+      );
+
+      const allowedRes = await request(app).get('/documents/doc-owned');
+      expect(allowedRes.status).toBe(200);
+      expect(allowedRes.body.updated).toBe(true);
+
+      const deniedRes = await request(app).get('/documents/doc-other');
+      expect(deniedRes.status).toBe(403);
     });
   });
 });

@@ -6,9 +6,9 @@ This guide describes how to publish the three Gatekeeper library packages under 
 
 | Package Directory  | npm Package Name                 | Version | Access |
 | :----------------- | :------------------------------- | :------ | :----- |
-| `packages/core`    | `@ahmedtamer/gatekeeper-core`    | `0.1.0` | Public |
-| `packages/react`   | `@ahmedtamer/gatekeeper-react`   | `0.1.0` | Public |
-| `packages/express` | `@ahmedtamer/gatekeeper-express` | `0.1.0` | Public |
+| `packages/core`    | `@ahmedtamer/gatekeeper-core`    | `0.2.0` | Public |
+| `packages/react`   | `@ahmedtamer/gatekeeper-react`   | `0.2.0` | Public |
+| `packages/express` | `@ahmedtamer/gatekeeper-express` | `0.2.0` | Public |
 
 > [!NOTE]
 > The demo applications (`apps/demo-api` and `apps/demo-dashboard`) and the root monorepo are marked `"private": true` and are **never** published to npm.

@@ -14,17 +14,20 @@ export const Can: React.FC<CanProps> = ({
   permission,
   permissions,
   requireAll = true,
+  context,
+  policy,
   fallback = null,
   children,
 }) => {
   const { can, canAll, canAny } = useGatekeeper();
 
   let isAllowed = false;
+  const options = context || policy ? { context, policy } : undefined;
 
   if (permission) {
-    isAllowed = can(permission);
+    isAllowed = can(permission, options);
   } else if (permissions && permissions.length > 0) {
-    isAllowed = requireAll ? canAll(permissions) : canAny(permissions);
+    isAllowed = requireAll ? canAll(permissions, options) : canAny(permissions, options);
   }
 
   if (!isAllowed) {

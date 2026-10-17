@@ -1,4 +1,4 @@
-﻿import React, { createContext, useMemo } from 'react';
+import React, { createContext, useMemo } from 'react';
 import {
   DEFAULT_ROLE_PERMISSIONS,
   can as coreCan,
@@ -7,6 +7,7 @@ import {
   getUserEffectivePermissions,
   isFeatureEnabled as coreIsFeatureEnabled,
   normalizeFeatureFlags,
+  type EvaluateOptions,
   type Permission,
 } from '@ahmedtamer/gatekeeper-core';
 import type { GatekeeperContextValue, GatekeeperProviderProps } from './types.js';
@@ -19,14 +20,17 @@ export const GatekeeperContext = createContext<GatekeeperContextValue | null>(nu
 export const GatekeeperProvider: React.FC<GatekeeperProviderProps> = ({
   user,
   currentUser,
+  subject,
   flags,
   featureFlags,
   roleMap = DEFAULT_ROLE_PERMISSIONS,
+  policy,
+  context,
   isLoading = false,
   children,
   fallback = null,
 }) => {
-  const activeUser = user ?? currentUser ?? null;
+  const activeUser = subject ?? user ?? currentUser ?? null;
   const rawFlags = flags ?? featureFlags;
 
   const normalizedFlags = useMemo(() => normalizeFeatureFlags(rawFlags), [rawFlags]);
@@ -39,20 +43,38 @@ export const GatekeeperProvider: React.FC<GatekeeperProviderProps> = ({
   const contextValue = useMemo<GatekeeperContextValue>(() => {
     return {
       user: activeUser,
+      subject: activeUser,
       flags: normalizedFlags,
       roleMap,
+      policy,
+      context,
       isLoading,
-      can: (permission: Permission) => {
+      can: (permission: Permission, canOptions?: EvaluateOptions) => {
         if (isLoading) return false;
-        return coreCan(activeUser, permission, roleMap);
+        const combinedOptions: EvaluateOptions = {
+          roleMap: canOptions?.roleMap ?? roleMap,
+          policy: canOptions?.policy ?? policy,
+          context: canOptions?.context ?? context,
+        };
+        return coreCan(activeUser, permission, combinedOptions);
       },
-      canAll: (permissions: Permission[]) => {
+      canAll: (permissions: Permission[], canOptions?: EvaluateOptions) => {
         if (isLoading) return false;
-        return coreCanAll(activeUser, permissions, roleMap);
+        const combinedOptions: EvaluateOptions = {
+          roleMap: canOptions?.roleMap ?? roleMap,
+          policy: canOptions?.policy ?? policy,
+          context: canOptions?.context ?? context,
+        };
+        return coreCanAll(activeUser, permissions, combinedOptions);
       },
-      canAny: (permissions: Permission[]) => {
+      canAny: (permissions: Permission[], canOptions?: EvaluateOptions) => {
         if (isLoading) return false;
-        return coreCanAny(activeUser, permissions, roleMap);
+        const combinedOptions: EvaluateOptions = {
+          roleMap: canOptions?.roleMap ?? roleMap,
+          policy: canOptions?.policy ?? policy,
+          context: canOptions?.context ?? context,
+        };
+        return coreCanAny(activeUser, permissions, combinedOptions);
       },
       isFeatureEnabled: (flagKey: string) => {
         if (isLoading) return false;
@@ -60,7 +82,7 @@ export const GatekeeperProvider: React.FC<GatekeeperProviderProps> = ({
       },
       effectivePermissions,
     };
-  }, [activeUser, normalizedFlags, roleMap, isLoading, effectivePermissions]);
+  }, [activeUser, normalizedFlags, roleMap, policy, context, isLoading, effectivePermissions]);
 
   if (isLoading && fallback) {
     return <GatekeeperContext.Provider value={contextValue}>{fallback}</GatekeeperContext.Provider>;

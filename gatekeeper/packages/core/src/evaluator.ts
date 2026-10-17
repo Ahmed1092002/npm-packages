@@ -1,40 +1,78 @@
 import { DEFAULT_ROLE_PERMISSIONS } from './roles.js';
 import type {
   AuthorizationResult,
+  AuthorizationSubject,
+  EvaluateOptions,
   FeatureFlag,
-  GatekeeperUser,
   Permission,
+  Role,
+  RoleMapOrOptions,
   RolePermissionsMap,
 } from './types.js';
 
 /**
- * Returns all effective permissions granted to a user, combining
- * their role-based permissions with any direct permissions assigned.
+ * Normalizes either a legacy RolePermissionsMap or a modern EvaluateOptions object.
+ * An empty plain object `{}` is treated as an explicit empty RolePermissionsMap (`{ roleMap: {} }`).
+ * When options is omitted/undefined, an empty options object is returned (roleMap remains undefined).
+ */
+export function parseEvaluateOptions(options?: RoleMapOrOptions): EvaluateOptions {
+  if (!options || typeof options !== 'object') {
+    return {};
+  }
+  if ('roleMap' in options || 'context' in options || 'policy' in options) {
+    return options as EvaluateOptions;
+  }
+  const values = Object.values(options);
+  if (values.length === 0 || values.every((v) => Array.isArray(v))) {
+    return { roleMap: options as RolePermissionsMap };
+  }
+  return options as EvaluateOptions;
+}
+
+/**
+ * Returns all effective permissions granted to a subject, combining
+ * permissions from every role in `roles`, the legacy `role` field,
+ * and direct permissions assigned in `permissions`.
+ * Deduplicates permissions and denies safely if no roles or permissions exist.
  */
 export function getUserEffectivePermissions(
-  user: GatekeeperUser | null | undefined,
-  roleMap: RolePermissionsMap = DEFAULT_ROLE_PERMISSIONS,
+  subject: AuthorizationSubject | null | undefined,
+  roleMapOrOptions?: RoleMapOrOptions,
 ): Set<Permission> {
   const permissions = new Set<Permission>();
 
-  if (!user) {
+  if (!subject) {
     return permissions;
   }
 
-  // 1. Role-based permissions
-  if (user.role && roleMap[user.role]) {
-    const rolePerms = roleMap[user.role];
-    if (rolePerms) {
+  const opts = parseEvaluateOptions(roleMapOrOptions);
+  const roleMap = opts.roleMap ?? DEFAULT_ROLE_PERMISSIONS;
+
+  // 1. Collect all distinct roles (both multiple `roles` and legacy `role`)
+  const rolesToEvaluate = new Set<Role>();
+  if (Array.isArray(subject.roles)) {
+    for (const r of subject.roles) {
+      if (r) rolesToEvaluate.add(r);
+    }
+  }
+  if (subject.role) {
+    rolesToEvaluate.add(subject.role);
+  }
+
+  // 2. Combine permissions from every granted role
+  for (const role of rolesToEvaluate) {
+    const rolePerms = roleMap[role];
+    if (rolePerms && Array.isArray(rolePerms)) {
       for (const perm of rolePerms) {
         permissions.add(perm);
       }
     }
   }
 
-  // 2. Direct user permissions
-  if (Array.isArray(user.permissions)) {
-    for (const perm of user.permissions) {
-      permissions.add(perm);
+  // 3. Merge direct user/subject permissions
+  if (Array.isArray(subject.permissions)) {
+    for (const perm of subject.permissions) {
+      if (perm) permissions.add(perm);
     }
   }
 
@@ -42,67 +80,77 @@ export function getUserEffectivePermissions(
 }
 
 /**
- * Evaluates whether a user has a specific permission.
+ * Evaluates whether a subject has a specific permission.
+ * Supports scoped policy checks and legacy roleMap options.
  *
- * @param user - The user to check.
+ * @param subject - The subject to check.
  * @param permission - The required permission string.
- * @param roleMap - Optional custom role-to-permissions map.
+ * @param options - Optional roleMap or EvaluateOptions ({ roleMap, context, policy }).
  * @returns boolean indicating if access is granted.
  */
 export function can(
-  user: GatekeeperUser | null | undefined,
+  subject: AuthorizationSubject | null | undefined,
   permission: Permission,
-  roleMap: RolePermissionsMap = DEFAULT_ROLE_PERMISSIONS,
+  options?: RoleMapOrOptions,
 ): boolean {
-  if (!user || !permission) {
+  if (!subject || !permission) {
     return false;
   }
 
-  const effective = getUserEffectivePermissions(user, roleMap);
+  const opts = parseEvaluateOptions(options);
+
+  // 1. Evaluate policy if provided
+  if (opts.policy) {
+    const decision = opts.policy(subject, permission, opts.context);
+    if (typeof decision === 'boolean') {
+      return decision;
+    }
+  }
+
+  // 2. Fall back to RBAC + direct permissions
+  const effective = getUserEffectivePermissions(subject, options !== undefined ? opts : undefined);
   return effective.has(permission);
 }
 
 /**
- * Checks if a user has ALL of the requested permissions.
+ * Checks if a subject has ALL of the requested permissions.
  */
 export function canAll(
-  user: GatekeeperUser | null | undefined,
+  subject: AuthorizationSubject | null | undefined,
   permissions: Permission[],
-  roleMap: RolePermissionsMap = DEFAULT_ROLE_PERMISSIONS,
+  options?: RoleMapOrOptions,
 ): boolean {
-  if (!user || !permissions.length) {
+  if (!subject || !permissions.length) {
     return false;
   }
 
-  const effective = getUserEffectivePermissions(user, roleMap);
-  return permissions.every((p) => effective.has(p));
+  return permissions.every((p) => can(subject, p, options));
 }
 
 /**
- * Checks if a user has AT LEAST ONE of the requested permissions.
+ * Checks if a subject has AT LEAST ONE of the requested permissions.
  */
 export function canAny(
-  user: GatekeeperUser | null | undefined,
+  subject: AuthorizationSubject | null | undefined,
   permissions: Permission[],
-  roleMap: RolePermissionsMap = DEFAULT_ROLE_PERMISSIONS,
+  options?: RoleMapOrOptions,
 ): boolean {
-  if (!user || !permissions.length) {
+  if (!subject || !permissions.length) {
     return false;
   }
 
-  const effective = getUserEffectivePermissions(user, roleMap);
-  return permissions.some((p) => effective.has(p));
+  return permissions.some((p) => can(subject, p, options));
 }
 
 /**
  * Evaluates access with detailed diagnostic reasons.
  */
 export function evaluatePermission(
-  user: GatekeeperUser | null | undefined,
+  subject: AuthorizationSubject | null | undefined,
   permission: Permission,
-  roleMap: RolePermissionsMap = DEFAULT_ROLE_PERMISSIONS,
+  options?: RoleMapOrOptions,
 ): AuthorizationResult {
-  if (!user) {
+  if (!subject) {
     return {
       allowed: false,
       reason: 'No authenticated user provided.',
@@ -110,7 +158,20 @@ export function evaluatePermission(
     };
   }
 
-  const effective = getUserEffectivePermissions(user, roleMap);
+  const opts = parseEvaluateOptions(options);
+
+  if (opts.policy) {
+    const decision = opts.policy(subject, permission, opts.context);
+    if (typeof decision === 'boolean') {
+      return {
+        allowed: decision,
+        reason: decision ? 'Permission granted by policy.' : 'Permission denied by policy.',
+        missingPermissions: decision ? undefined : [permission],
+      };
+    }
+  }
+
+  const effective = getUserEffectivePermissions(subject, options !== undefined ? opts : undefined);
   const allowed = effective.has(permission);
 
   if (allowed) {
@@ -120,9 +181,11 @@ export function evaluatePermission(
     };
   }
 
+  const roleDesc = subject.role ?? (subject.roles?.length ? subject.roles.join(', ') : 'none');
+
   return {
     allowed: false,
-    reason: `User with role '${user.role}' lacks required permission '${permission}'.`,
+    reason: `User with role '${roleDesc}' lacks required permission '${permission}'.`,
     missingPermissions: [permission],
   };
 }

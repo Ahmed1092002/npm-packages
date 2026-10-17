@@ -1,4 +1,4 @@
-﻿# 🛡️ Gatekeeper
+# 🛡️ Gatekeeper
 
 > **Portfolio-quality, production-minded authorization and feature-flag toolkit for full-stack TypeScript applications.**
 
@@ -68,6 +68,113 @@ npm install @ahmedtamer/gatekeeper-core @ahmedtamer/gatekeeper-express
 
 ---
 
+---
+
+## 💡 Identity Normalization & Adapters (v0.2)
+
+Gatekeeper normalizes identity data into a standard `AuthorizationSubject` rather than forcing your application into a rigid database schema:
+
+```typescript
+type AuthorizationSubject = {
+  id: string;
+  role?: Role; // Legacy single-role support
+  roles?: Role[]; // Preferred multiple-role support
+  permissions?: Permission[]; // Explicit direct grants
+  attributes?: Record<string, unknown>; // Optional metadata (tenantId, plan, teamId)
+};
+```
+
+### Normalization Examples
+
+#### 1. Simple Database User (`createSubject`)
+
+```typescript
+import { createSubject } from '@ahmedtamer/gatekeeper-core';
+
+interface DbUser {
+  user_id: string;
+  primary_role: string;
+  is_active: boolean;
+}
+
+const subject = createSubject(dbUser, {
+  getId: (u) => u.user_id,
+  getRoles: (u) => [u.primary_role],
+  getAttributes: (u) => ({ isActive: u.is_active }),
+});
+```
+
+#### 2. Keycloak / OIDC JWT Claims with Nested Roles (`fromJwtClaims`)
+
+```typescript
+import { fromJwtClaims } from '@ahmedtamer/gatekeeper-core';
+
+// Automatically resolves 'sub', 'realm_access.roles', and custom claims
+const jwtPayload = {
+  sub: 'auth0|123456',
+  realm_access: { roles: ['finance-admin', 'audit-viewer'] },
+  email: 'finance@corp.local',
+  tenant_id: 'ten_99',
+};
+
+const subject = fromJwtClaims(jwtPayload);
+// subject.roles -> ['finance-admin', 'audit-viewer']
+// subject.attributes -> { tenant_id: 'ten_99' }
+```
+
+#### 3. Custom Membership Model with Scoped Roles (`createSubject`)
+
+```typescript
+import { createSubject } from '@ahmedtamer/gatekeeper-core';
+
+interface OrgMembership {
+  memberId: string;
+  organization: { id: string; name: string };
+  accessTier: { roles: string[]; directGrants?: string[] };
+}
+
+const memberSubject = createSubject(membership, {
+  getId: (m) => m.memberId,
+  getRoles: (m) => m.accessTier.roles,
+  getPermissions: (m) => m.accessTier.directGrants,
+  getAttributes: (m) => ({ orgId: m.organization.id }),
+});
+```
+
+---
+
+## ⚖️ RBAC vs. Scoped / Policy-Based Authorization
+
+Gatekeeper supports both static Role-Based Access Control and contextual, scoped policies:
+
+- **RBAC**: Evaluates coarse-grained permissions granted by roles (`manager` -> `['reports.view']`).
+- **Direct Grants**: Augments individual users with explicit permissions without role proliferation.
+- **Scoped Policies**: Enables ownership, tenancy, and attribute checks via an `AuthorizationPolicy` callback:
+
+```typescript
+import { can, type AuthorizationPolicy } from '@ahmedtamer/gatekeeper-core';
+
+// Policy returns boolean for immediate decision, or undefined to fall back to RBAC
+const canEditDocument: AuthorizationPolicy = (subject, permission, context) => {
+  if (permission === 'documents.update') {
+    return context?.ownerId === subject.id; // Document owner check
+  }
+  return undefined; // Fall back to standard RBAC evaluation
+};
+
+const isAllowed = can(subject, 'documents.update', {
+  policy: canEditDocument,
+  context: { ownerId: 'usr_100' },
+});
+```
+
+> [!WARNING]
+> **Frontend UX vs. Backend Enforcement Security Notice:**
+> Frontend checks with `@ahmedtamer/gatekeeper-react` (`<Can>`, `usePermission`) exist **solely to optimize user experience** by hiding irrelevant navigation and controls.
+> **Backend authorization with `@ahmedtamer/gatekeeper-express` remains strictly mandatory.** Never rely on client-side checks for security boundaries.
+
+---
+
 ## 💡 Usage Examples
 
 ### 1. React (`@ahmedtamer/gatekeeper-react`)
@@ -83,13 +190,14 @@ import {
   usePermission,
   useFeatureFlag,
 } from '@ahmedtamer/gatekeeper-react';
-import type { GatekeeperUser } from '@ahmedtamer/gatekeeper-core';
+import type { AuthorizationSubject } from '@ahmedtamer/gatekeeper-core';
 
-const currentUser: GatekeeperUser = {
+const currentSubject: AuthorizationSubject = {
   id: 'usr_100',
   name: 'Alex Rivera',
-  role: 'manager', // Default permissions: ['users.read', 'reports.view']
-  permissions: ['custom.audit'], // Optional direct permissions augmenting role
+  roles: ['manager', 'billing-manager'], // Multiple roles supported
+  permissions: ['custom.audit'], // Optional direct permissions augmenting roles
+  attributes: { tenantId: 'tenant_abc' },
 };
 
 const flags = {
@@ -100,7 +208,7 @@ const flags = {
 
 export function App() {
   return (
-    <GatekeeperProvider user={currentUser} flags={flags} isLoading={false}>
+    <GatekeeperProvider subject={currentSubject} flags={flags} isLoading={false}>
       <MainLayout />
     </GatekeeperProvider>
   );

@@ -1,6 +1,6 @@
 {
   "name": "@ahmedtamer/gatekeeper-express",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Express middleware for authorization and feature flags with customizable callbacks powered by Gatekeeper Core",
   "keywords": [
     "express",
@@ -51,7 +51,7 @@
     "express": ">=4.18.0"
   },
   "dependencies": {
-    "@ahmedtamer/gatekeeper-core": "workspace:^0.1.0"
+    "@ahmedtamer/gatekeeper-core": "workspace:^0.2.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",

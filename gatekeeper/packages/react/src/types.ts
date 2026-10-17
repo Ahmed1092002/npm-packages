@@ -1,29 +1,37 @@
-﻿import type {
+import type {
+  AuthorizationPolicy,
+  AuthorizationSubject,
+  EvaluateOptions,
   FeatureFlag,
-  GatekeeperUser,
   Permission,
   RolePermissionsMap,
 } from '@ahmedtamer/gatekeeper-core';
 import type { ReactNode } from 'react';
 
 export interface GatekeeperContextValue {
-  user: GatekeeperUser | null;
+  user: AuthorizationSubject | null;
+  subject: AuthorizationSubject | null;
   flags: Record<string, boolean>;
   roleMap: RolePermissionsMap;
+  policy?: AuthorizationPolicy;
+  context?: Record<string, unknown>;
   isLoading: boolean;
-  can: (permission: Permission) => boolean;
-  canAll: (permissions: Permission[]) => boolean;
-  canAny: (permissions: Permission[]) => boolean;
+  can: (permission: Permission, options?: EvaluateOptions) => boolean;
+  canAll: (permissions: Permission[], options?: EvaluateOptions) => boolean;
+  canAny: (permissions: Permission[], options?: EvaluateOptions) => boolean;
   isFeatureEnabled: (flagKey: string) => boolean;
   effectivePermissions: string[];
 }
 
 export interface GatekeeperProviderProps {
-  user?: GatekeeperUser | null;
-  currentUser?: GatekeeperUser | null;
+  user?: AuthorizationSubject | null;
+  currentUser?: AuthorizationSubject | null;
+  subject?: AuthorizationSubject | null;
   flags?: Record<string, boolean> | FeatureFlag[];
   featureFlags?: Record<string, boolean> | FeatureFlag[];
   roleMap?: RolePermissionsMap;
+  policy?: AuthorizationPolicy;
+  context?: Record<string, unknown>;
   isLoading?: boolean;
   children: ReactNode;
   fallback?: ReactNode;
@@ -36,6 +44,10 @@ export interface CanProps {
   permissions?: Permission[];
   /** If true when multiple permissions given, user must have all. Default is true */
   requireAll?: boolean;
+  /** Optional scoped context for policy evaluation */
+  context?: Record<string, unknown>;
+  /** Optional policy callback overriding or supplementing provider policy */
+  policy?: AuthorizationPolicy;
   /** Custom fallback component if unauthorized */
   fallback?: ReactNode;
   /** Content to render when authorized */

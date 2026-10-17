@@ -1,5 +1,5 @@
-﻿import { useContext } from 'react';
-import type { Permission } from '@ahmedtamer/gatekeeper-core';
+import { useContext } from 'react';
+import type { EvaluateOptions, Permission } from '@ahmedtamer/gatekeeper-core';
 import { GatekeeperContext } from './context.js';
 import type { GatekeeperContextValue } from './types.js';
 
@@ -21,10 +21,11 @@ export function useGatekeeper(): GatekeeperContextValue {
  *
  * @example
  * const canDelete = usePermission('users.delete');
+ * const canEdit = usePermission('projects.update', { context: { projectOwnerId: 'u1' } });
  */
-export function usePermission(permission: Permission): boolean {
+export function usePermission(permission: Permission, options?: EvaluateOptions): boolean {
   const { can } = useGatekeeper();
-  return can(permission);
+  return can(permission, options);
 }
 
 /**
@@ -41,15 +42,15 @@ export function useFeatureFlag(flagKey: string): boolean {
 /**
  * React hook to check if the current user has all specified permissions.
  */
-export function useCanAll(permissions: Permission[]): boolean {
+export function useCanAll(permissions: Permission[], options?: EvaluateOptions): boolean {
   const { canAll } = useGatekeeper();
-  return canAll(permissions);
+  return canAll(permissions, options);
 }
 
 /**
  * React hook to check if the current user has at least one of the specified permissions.
  */
-export function useCanAny(permissions: Permission[]): boolean {
+export function useCanAny(permissions: Permission[], options?: EvaluateOptions): boolean {
   const { canAny } = useGatekeeper();
-  return canAny(permissions);
+  return canAny(permissions, options);
 }

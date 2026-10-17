@@ -1,6 +1,6 @@
 {
   "name": "@ahmedtamer/gatekeeper-core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Pure framework-independent authorization and feature-flag evaluator for TypeScript",
   "keywords": [
     "authorization",
